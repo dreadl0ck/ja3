@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/dreadl0ck/gopcap"
 	"github.com/google/gopacket"
@@ -37,9 +38,12 @@ func ReadFileCSV(file string, out io.Writer, separator string) {
 	// close on exit
 	defer r.Close()
 
+	columns := []string{"timestamp", "source_ip", "source_port", "destination_ip", "destination_port", "ja3_digest", "\n"}
+	out.Write([]byte(strings.Join(columns, separator)))
+
 	for {
 		// read packet data
-		_, data, err := r.ReadNextPacket()
+		h, data, err := r.ReadNextPacket()
 		if err == io.EOF {
 			return
 		} else if err != nil {
@@ -67,6 +71,8 @@ func ReadFileCSV(file string, out io.Writer, separator string) {
 				continue
 			}
 
+			b.WriteString(timeToString(time.Unix(int64(h.TsSec), int64(h.TsUsec*1000))))
+			b.WriteString(separator)
 			b.WriteString(nl.NetworkFlow().Src().String())
 			b.WriteString(separator)
 			b.WriteString(tl.TransportFlow().Src().String())
