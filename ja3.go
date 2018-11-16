@@ -1,6 +1,6 @@
 /*
  * JA3 - TLS Client Hello Hash
- * Copyright (c) 2017 Philipp Mieden <dreadl0ck [at] protonmail [dot] ch>
+ * Copyright (c) 2018 Philipp Mieden <dreadl0ck [at] protonmail [dot] ch>
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -22,6 +22,18 @@ import (
 	"github.com/dreadl0ck/tlsx"
 )
 
+const (
+	sepValue = "-"
+	sepField = ","
+)
+
+// Digest returns only the digest md5
+func Digest(hello *tlsx.ClientHello) string {
+	h, _ := Hash(hello)
+	return h
+}
+
+// Hash returns the JA3 hash for a given tlsx.ClientHello instance and the bare string used to generate it
 // JA3 is a technique developed by Salesforce, to fingerprint TLS Client Hellos.
 // the official python implementation can be found here: https://github.com/salesforce/ja3
 // JA3 gathers the decimal values of the bytes for the following fields; SSL Version, Accepted Ciphers, List of Extensions, Elliptic Curves, and Elliptic Curve Formats.
@@ -33,52 +45,78 @@ import (
 // If there are no SSL Extensions in the Client Hello, the fields are left empty.
 // Example:
 // 769,4–5–10–9–100–98–3–6–19–18–99,,,
-// These strings are then MD5 hashed to produce an easily consumable and shareable 32 character fingerprint. This is the JA3 SSL Client Fingerprint.
-func JA3(hello *tlsx.ClientHello) string {
+// These strings are then MD5 hashed to produce an easily consumable and shareable 32 character fingerprint.
+// This is the JA3 SSL Client Fingerprint returned by this function.
+// This implementation uses multiple strings.Builder instances for performance
+func Hash(hello *tlsx.ClientHello) (digest string, bare string) {
 
-	// get version
-	version := strconv.FormatUint(uint64(hello.Version), 10)
+	var (
+		// get version
+		version = strconv.FormatUint(uint64(hello.HandshakeVersion), 10)
+		suites  strings.Builder
+		exts    strings.Builder
+		sGroups strings.Builder
+		sPoints strings.Builder
+	)
 
 	// collect cipher suites
-	var suites []string
-	for _, cs := range hello.CipherSuites {
-		suites = append(suites, strconv.Itoa(int(cs)))
+	lastElem := len(hello.CipherSuites) - 1
+	for i, cs := range hello.CipherSuites {
+		suites.WriteString(strconv.Itoa(int(cs)))
+		if i != lastElem {
+			suites.WriteString(sepValue)
+		}
 	}
 
 	// collect extensions
-	var exts []string
-	for _, e := range hello.AllExtensions {
-		exts = append(exts, strconv.Itoa(int(e)))
+	lastElem = len(hello.AllExtensions) - 1
+	for i, e := range hello.AllExtensions {
+		exts.WriteString(strconv.Itoa(int(e)))
+		if i != lastElem {
+			exts.WriteString(sepValue)
+		}
 	}
 
 	// collect supported groups
-	var sPoints, sGroups []string
-	for _, e := range hello.SupportedGroups {
-		sGroups = append(sGroups, strconv.Itoa(int(e)))
+	lastElem = len(hello.SupportedGroups) - 1
+	for i, e := range hello.SupportedGroups {
+		sGroups.WriteString(strconv.Itoa(int(e)))
+		if i != lastElem {
+			sGroups.WriteString(sepValue)
+		}
 	}
 
 	// collect supported points
-	for _, e := range hello.SupportedPoints {
-		sPoints = append(sPoints, strconv.Itoa(int(e)))
+	lastElem = len(hello.SupportedPoints) - 1
+	for i, e := range hello.SupportedPoints {
+		sPoints.WriteString(strconv.Itoa(int(e)))
+		if i != lastElem {
+			sPoints.WriteString(sepValue)
+		}
 	}
 
-	// build bare
-	bare := strings.Join([]string{
-		version,
-		strings.Join(suites, "-"),
-		strings.Join(exts, "-"),
-		strings.Join(sGroups, "-"),
-		strings.Join(sPoints, "-"),
-	}, ",")
+	// create bare string
+	var b strings.Builder
 
-	// fmt.Println("ja3:", bare)
+	// allocate enough space for all fields + 4 separators
+	b.Grow(len(version) + suites.Len() + exts.Len() + sGroups.Len() + sPoints.Len() + 4)
 
-	// produce md5
+	b.WriteString(version)
+	b.WriteString(sepField)
+	b.WriteString(suites.String())
+	b.WriteString(sepField)
+	b.WriteString(exts.String())
+	b.WriteString(sepField)
+	b.WriteString(sGroups.String())
+	b.WriteString(sepField)
+	b.WriteString(sPoints.String())
+
+	// produce md5 hash from bare string
 	var out []byte
-	for _, b := range md5.Sum([]byte(bare)) {
-		out = append(out, b)
+	for _, by := range md5.Sum([]byte(b.String())) {
+		out = append(out, by)
 	}
 
 	// return as hex string
-	return hex.EncodeToString(out)
+	return hex.EncodeToString(out), b.String()
 }
