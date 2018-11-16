@@ -3,6 +3,7 @@
 JA3 is a technique developed by Salesforce, to fingerprint the TLS client hello.
 
 The official python implementation can be found here: https://github.com/salesforce/ja3
+
 More details can be found in their blog post: https://engineering.salesforce.com/open-sourcing-ja3-92c9e53c3c41
 
 This package provides a pure golang implementation, that was created to operate on **ClientHello** instances from the **bradleyfalzon/tlsx** package.
@@ -17,17 +18,17 @@ and gopacket for packet decoding.
 This package exports the following API:
     
 ```go
-    // parse PCAP file from disk and write to out
-    func ReadFileCSV(file string, out io.Writer, separator string)
-    func ReadFileJSON(file string, out io.Writer)
-    
-    // operate on a gopacket.Packet
-    func PacketDigest(p gopacket.Packet) string
-    func Packet(p gopacket.Packet) (digest string, bare string)
-    
-    // operate on a tlsx.ClientHello
-    func Digest(hello *tlsx.ClientHello) string
-    func Hash(hello *tlsx.ClientHello) (digest string, bare string)
+// parse PCAP file from disk and write to out
+func ReadFileCSV(file string, out io.Writer, separator string)
+func ReadFileJSON(file string, out io.Writer)
+
+// operate on a gopacket.Packet
+func PacketDigest(p gopacket.Packet) string
+func Packet(p gopacket.Packet) (digest string, bare string)
+
+// operate on a tlsx.ClientHello
+func Digest(hello *tlsx.ClientHello) string
+func Hash(hello *tlsx.ClientHello) (digest string, bare string)
 ```
 
 ## Commandline Tool
