@@ -102,15 +102,17 @@ For more details on what you can see and do with JA3 and JA3S, please see this S
 
 ## Benchmarks & Tests
 
+Thanks @lukechampine for the optimization tips! 
+DigestFromHello is ~200ns faster now and there are less allocations :)
+
 Run the benchmarks and the correctness test with:
 
-    $ go test -bench=. -v
-    === RUN   TestDigestCorrect
-    --- PASS: TestDigestCorrect (0.00s)
+    $ go test -bench=.
     goos: darwin
     goarch: amd64
     pkg: github.com/dreadl0ck/ja3
-    BenchmarkDigestFromPacket-12    	 1000000	      1667 ns/op
-    BenchmarkDigestFromHello-12     	 1000000	      1249 ns/op
+    BenchmarkDigestFromPacket-12      	 1000000	      1524 ns/op	     992 B/op	      25 allocs/op
+    BenchmarkDigestFromHello-12       	 1000000	      1096 ns/op	     776 B/op	      15 allocs/op
+    BenchmarkDigestFromHelloOld-12    	 1000000	      1273 ns/op	     672 B/op	      25 allocs/op
     PASS
-    ok  	github.com/dreadl0ck/ja3	2.969s
+    ok  	github.com/dreadl0ck/ja3	3.961s

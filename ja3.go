@@ -28,6 +28,11 @@ const (
 	sepField = ","
 )
 
+var (
+	sepValueByte = byte(45)
+	sepFieldByte = byte(44)
+)
+
 // Digest returns only the digest md5
 func Digest(hello *tlsx.ClientHello) string {
 	h, _ := Hash(hello)
@@ -48,8 +53,87 @@ func Digest(hello *tlsx.ClientHello) string {
 // 769,4–5–10–9–100–98–3–6–19–18–99,,,
 // These strings are then MD5 hashed to produce an easily consumable and shareable 32 character fingerprint.
 // This is the JA3 SSL Client Fingerprint returned by this function.
-// This implementation uses multiple strings.Builder instances for performance
 func Hash(hello *tlsx.ClientHello) (digest string, bare string) {
+
+	var (
+		// TODO use fixed size buffers?
+		suites  []byte
+		exts    []byte
+		sGroups []byte
+		sPoints []byte
+	)
+
+	// collect cipher suites
+	lastElem := len(hello.CipherSuites) - 1
+	for i, cs := range hello.CipherSuites {
+		suites = strconv.AppendInt(suites, int64(cs), 10)
+		if i != lastElem {
+			suites = append(suites, sepValueByte)
+		}
+	}
+
+	// collect extensions
+	lastElem = len(hello.AllExtensions) - 1
+	for i, e := range hello.AllExtensions {
+		exts = strconv.AppendInt(exts, int64(e), 10)
+		if i != lastElem {
+			exts = append(exts, sepValueByte)
+		}
+	}
+
+	// collect supported groups
+	lastElem = len(hello.SupportedGroups) - 1
+	for i, e := range hello.SupportedGroups {
+		sGroups = strconv.AppendInt(sGroups, int64(e), 10)
+		if i != lastElem {
+			sGroups = append(sGroups, sepValueByte)
+		}
+	}
+
+	// collect supported points
+	lastElem = len(hello.SupportedPoints) - 1
+	for i, e := range hello.SupportedPoints {
+		sPoints = strconv.AppendInt(sPoints, int64(e), 10)
+		if i != lastElem {
+			sPoints = append(sPoints, sepValueByte)
+		}
+	}
+
+	// TODO use fixed size buffer?
+	// 8 (version) + len(suites) + len(exts) + len(sGroups) + len(sPoints) + 4 (separators)
+	// var buf = make([]byte, 8+len(suites)+len(exts)+len(sGroups)+len(sPoints)+4)
+
+	var buf []byte
+
+	// version
+	buf = strconv.AppendInt(buf, int64(hello.HandshakeVersion), 10)
+	buf = append(buf, sepFieldByte)
+
+	// ciphersuites
+	buf = append(buf, suites...)
+	buf = append(buf, sepFieldByte)
+
+	// extensions
+	buf = append(buf, exts...)
+	buf = append(buf, sepFieldByte)
+
+	// groups
+	buf = append(buf, sGroups...)
+	buf = append(buf, sepFieldByte)
+
+	buf = append(buf, sPoints...)
+
+	// produce md5 hash from bare string
+	sum := md5.Sum(buf)
+
+	// return as hex string
+	// [:] to create []byte from [Size]byte
+	return hex.EncodeToString(sum[:]), string(buf)
+}
+
+// HashWithBuilder uses the strings.Builder type to assemble the strings
+// This implementation is a previous version that is slower and has more allocations
+func HashWithBuilder(hello *tlsx.ClientHello) (digest string, bare string) {
 
 	var (
 		// get version

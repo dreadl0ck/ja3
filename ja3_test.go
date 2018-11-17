@@ -41,6 +41,37 @@ var tlsPacket = []byte{
 	0x03, 0x02, 0x02,
 }
 
+func getHello(p gopacket.Packet, b *testing.B) (hello *tlsx.ClientHello) {
+	if tl := p.TransportLayer(); tl != nil {
+		if tcp, ok := tl.(*layers.TCP); ok {
+			if tcp.SYN {
+				b.Fatal("Connection setup")
+			} else if tcp.FIN {
+				b.Fatal("Connection teardown")
+			} else if tcp.ACK && len(tcp.LayerPayload()) == 0 {
+				b.Fatal("Acknowledgement packet")
+			} else if tcp.RST {
+				b.Fatal("Unexpected packet")
+			} else {
+
+				// invalid length, this is not handled by the tsx package
+				// bail out otherwise there will be a panic
+				if len(tcp.LayerPayload()) < 6 {
+					b.Fatal("invalid packet")
+				}
+
+				hello = &tlsx.ClientHello{}
+
+				err := hello.Unmarshall(tcp.LayerPayload())
+				if err != nil {
+					b.Fatal("invalid packet", err)
+				}
+			}
+		}
+	}
+	return
+}
+
 func TestDigestCorrect(t *testing.T) {
 	var (
 		p       = gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Lazy)
@@ -65,42 +96,29 @@ func BenchmarkDigestFromPacket(b *testing.B) {
 }
 
 func BenchmarkDigestFromHello(b *testing.B) {
+
 	var (
 		p     = gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Lazy)
-		hello *tlsx.ClientHello
+		hello = getHello(p, b)
 	)
-
-	if tl := p.TransportLayer(); tl != nil {
-		if tcp, ok := tl.(*layers.TCP); ok {
-			if tcp.SYN {
-				// Connection setup
-			} else if tcp.FIN {
-				// Connection teardown
-			} else if tcp.ACK && len(tcp.LayerPayload()) == 0 {
-				// Acknowledgement packet
-			} else if tcp.RST {
-				// Unexpected packet
-			} else {
-
-				// invalid length, this is not handled by the tsx package
-				// bail out otherwise there will be a panic
-				if len(tcp.LayerPayload()) < 6 {
-					b.Fatal("invalid packet")
-				}
-
-				hello = &tlsx.ClientHello{}
-
-				err := hello.Unmarshall(tcp.LayerPayload())
-				if err != nil {
-					b.Fatal("invalid packet")
-				}
-			}
-		}
-	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		_, _ = Hash(hello)
+	}
+}
+
+func BenchmarkDigestFromHelloOld(b *testing.B) {
+
+	var (
+		p     = gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Lazy)
+		hello = getHello(p, b)
+	)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_, _ = HashWithBuilder(hello)
 	}
 }
