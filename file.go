@@ -17,34 +17,49 @@ package ja3
 import (
 	"fmt"
 	"io"
+	"os"
 	"strings"
-	"time"
 
-	"github.com/dreadl0ck/gopcap"
+	"github.com/google/gopacket/pcapgo"
+
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 )
+
+// PacketSource means we can read Packets
+type PacketSource interface {
+	ReadPacketData() ([]byte, gopacket.CaptureInfo, error)
+}
 
 // ReadFileCSV reads the PCAP file at the given path
 // and prints out all packets containing JA3 digests to the supplied io.Writer
 // currently no PCAPNG support
 func ReadFileCSV(file string, out io.Writer, separator string) {
 
-	// get PCAP reader
-	r, err := gopcap.Open(file)
+	f, err := os.Open(file)
 	if err != nil {
 		panic(err)
 	}
+	defer f.Close()
 
-	// close on exit
-	defer r.Close()
+	var r PacketSource
+
+	r, err = pcapgo.NewReader(f)
+	if err != nil {
+		// maybe its a PCAPNG
+		r, err = pcapgo.NewNgReader(f, pcapgo.DefaultNgReaderOptions)
+		if err != nil {
+			// nope
+			panic(err)
+		}
+	}
 
 	columns := []string{"timestamp", "source_ip", "source_port", "destination_ip", "destination_port", "ja3_digest", "\n"}
 	out.Write([]byte(strings.Join(columns, separator)))
 
 	for {
 		// read packet data
-		h, data, err := r.ReadNextPacket()
+		data, ci, err := r.ReadPacketData()
 		if err == io.EOF {
 			return
 		} else if err != nil {
@@ -55,7 +70,7 @@ func ReadFileCSV(file string, out io.Writer, separator string) {
 			// create gopacket
 			p = gopacket.NewPacket(data, layers.LinkTypeEthernet, gopacket.Lazy)
 			// get JA3 if possible
-			digest, _ = Packet(p)
+			digest = DigestHexPacket(p)
 		)
 
 		// check if we got a result
@@ -72,7 +87,7 @@ func ReadFileCSV(file string, out io.Writer, separator string) {
 				continue
 			}
 
-			b.WriteString(timeToString(time.Unix(int64(h.TsSec), int64(h.TsUsec*1000))))
+			b.WriteString(timeToString(ci.Timestamp))
 			b.WriteString(separator)
 			b.WriteString(nl.NetworkFlow().Src().String())
 			b.WriteString(separator)

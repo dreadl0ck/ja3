@@ -15,22 +15,31 @@
 package ja3
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+
 	"github.com/dreadl0ck/tlsx"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 )
 
-// PacketDigest returns only the Ja3 digest
-// if the supplied packet contains a TLS client hello
-// otherwise returns an empty string
-func PacketDigest(p gopacket.Packet) string {
-	h, _ := Packet(p)
-	return h
+// DigestPacket returns the Ja3 digest
+// for a packet carrying a TLS Client Hello
+// or an empty byte slice
+func DigestPacket(p gopacket.Packet) [md5.Size]byte {
+	return md5.Sum(BarePacket(p))
 }
 
-// Packet returns the Ja3 digest if the supplied packet contains a TLS client hello
+// DigestHexPacket returns the hex string for the packet
+// for a packet carrying a TLS Client Hello
+func DigestHexPacket(p gopacket.Packet) string {
+	sum := md5.Sum(BarePacket(p))
+	return hex.EncodeToString(sum[:])
+}
+
+// BarePacket returns the Ja3 digest if the supplied packet contains a TLS client hello
 // otherwise returns an empty string
-func Packet(p gopacket.Packet) (digest string, bare string) {
+func BarePacket(p gopacket.Packet) []byte {
 	if tl := p.TransportLayer(); tl != nil {
 		if tcp, ok := tl.(*layers.TCP); ok {
 			if tcp.SYN {
@@ -46,7 +55,7 @@ func Packet(p gopacket.Packet) (digest string, bare string) {
 				// invalid length, this is not handled by the tsx package
 				// bail out otherwise there will be a panic
 				if len(tcp.LayerPayload()) < 6 {
-					return "", ""
+					return []byte{}
 				}
 
 				// data packet
@@ -56,13 +65,13 @@ func Packet(p gopacket.Packet) (digest string, bare string) {
 				)
 				if err != nil {
 					// fmt.Println(err, p.Dump())
-					return "", ""
+					return []byte{}
 				}
 
-				// return JA3
-				return Hash(&hello)
+				// return JA3 bare
+				return Bare(&hello)
 			}
 		}
 	}
-	return "", ""
+	return []byte{}
 }

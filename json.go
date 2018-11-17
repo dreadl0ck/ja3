@@ -18,12 +18,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"time"
 
-	"github.com/dreadl0ck/gopcap"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcapgo"
 )
 
 // Record contains all information for a calculated JA3
@@ -42,20 +43,32 @@ type Record struct {
 // currently no PCAPNG support
 func ReadFileJSON(file string, out io.Writer) {
 
-	// get PCAP reader
-	r, err := gopcap.Open(file)
+	f, err := os.Open(file)
 	if err != nil {
 		panic(err)
 	}
+	defer f.Close()
 
-	// close on exit
-	defer r.Close()
+	var r PacketSource
+
+	r, err = pcapgo.NewReader(f)
+	if err != nil {
+		// maybe its a PCAPNG
+		var errPcapNg error
+		r, errPcapNg = pcapgo.NewNgReader(f, pcapgo.DefaultNgReaderOptions)
+		if errPcapNg != nil {
+			// nope
+			fmt.Println("pcap error:", err)
+			fmt.Println("pcap-ng error:", errPcapNg)
+			panic("cannot open PCAP file")
+		}
+	}
 
 	var records []*Record
 
 	for {
 		// read packet data
-		h, data, err := r.ReadNextPacket()
+		data, ci, err := r.ReadPacketData()
 		if err == io.EOF {
 			break
 		} else if err != nil {
@@ -67,11 +80,11 @@ func ReadFileJSON(file string, out io.Writer) {
 			p = gopacket.NewPacket(data, layers.LinkTypeEthernet, gopacket.Lazy)
 
 			// get JA3 if possible
-			digest, bare = Packet(p)
+			bare = BarePacket(p)
 		)
 
 		// check if we got a result
-		if digest != "" {
+		if len(bare) > 0 {
 
 			var (
 				nl = p.NetworkLayer()
@@ -92,11 +105,11 @@ func ReadFileJSON(file string, out io.Writer) {
 			records = append(records, &Record{
 				DestinationIP:   nl.NetworkFlow().Dst().String(),
 				DestinationPort: dstPort,
-				JA3:             bare,
-				JA3Digest:       digest,
+				JA3:             string(bare),
+				JA3Digest:       BareToDigestHex(bare),
 				SourceIP:        nl.NetworkFlow().Src().String(),
 				SourcePort:      srcPort,
-				Timestamp:       timeToString(time.Unix(int64(h.TsSec), int64(h.TsUsec*1000))),
+				Timestamp:       timeToString(ci.Timestamp),
 			})
 		}
 	}

@@ -25,28 +25,40 @@ however using byte slices for this turned out to be faster and causes less alloc
 ## Package Usage
 
 This package exports the following API:
-    
+
+Files:
+
 ```go
-// parse PCAP file from disk and write to out
 func ReadFileJSON(file string, out io.Writer)
 ```
 ```go
 func ReadFileCSV(file string, out io.Writer, separator string)
 ```
+
+Using gopacket.Packet:
+
 ```go
-// operate on a gopacket.Packet
-func PacketDigest(p gopacket.Packet) string
+func BarePacket(p gopacket.Packet) []byte
 ```
 ```go
-func Packet(p gopacket.Packet) (digest string, bare string)
+func DigestPacket(p gopacket.Packet) [md5.Size]byte
 ```
 ```go
-// operate on a tlsx.ClientHello
-func Digest(hello *tlsx.ClientHello) string
+func DigestHexPacket(p gopacket.Packet) string 
+```
+
+Using tlsx.ClientHello:
+
+```go
+func Bare(hello *tlsx.ClientHello) []byte
 ```
 ```go
-func Hash(hello *tlsx.ClientHello) (digest string, bare string)
+func Digest(hello *tlsx.ClientHello) [md5.Size]byte
 ```
+```go
+func DigestHex(hello *tlsx.ClientHello) string
+```
+
 
 ## Commandline Tool
 
