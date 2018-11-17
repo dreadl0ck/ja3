@@ -5,7 +5,7 @@
 [![Golang](https://img.shields.io/badge/Go-1.10-blue.svg)](https://golang.org)
 ![Linux](https://img.shields.io/badge/Supports-Linux-green.svg)
 ![macOS](https://img.shields.io/badge/Supports-macOS-green.svg)
-![Windows](https://img.shields.io/badge/Supports-Windosa-green.svg)
+![Windows](https://img.shields.io/badge/Supports-Windows-green.svg)
 
 JA3 is a technique developed by Salesforce, to fingerprint the TLS client hello.
 
