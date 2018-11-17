@@ -1,5 +1,12 @@
 # JA3
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/dreadl0ck/ja3)](https://goreportcard.com/report/github.com/dreadl0ck/ja3)
+[![License](https://img.shields.io/badge/License-BSDv3-blue.svg)](https://raw.githubusercontent.com/dreadl0ck/ja3/master/docs/LICENSE)
+[![Golang](https://img.shields.io/badge/Go-1.10-blue.svg)](https://golang.org)
+![Linux](https://img.shields.io/badge/Supports-Linux-green.svg)
+![macOS](https://img.shields.io/badge/Supports-macOS-green.svg)
+![Windows](https://img.shields.io/badge/Supports-Windosa-green.svg)
+
 JA3 is a technique developed by Salesforce, to fingerprint the TLS client hello.
 
 The official python implementation can be found here: https://github.com/salesforce/ja3
