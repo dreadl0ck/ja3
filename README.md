@@ -28,15 +28,23 @@ This package exports the following API:
     
 ```go
 // parse PCAP file from disk and write to out
-func ReadFileCSV(file string, out io.Writer, separator string)
 func ReadFileJSON(file string, out io.Writer)
-
+```
+```go
+func ReadFileCSV(file string, out io.Writer, separator string)
+```
+```go
 // operate on a gopacket.Packet
 func PacketDigest(p gopacket.Packet) string
+```
+```go
 func Packet(p gopacket.Packet) (digest string, bare string)
-
+```
+```go
 // operate on a tlsx.ClientHello
 func Digest(hello *tlsx.ClientHello) string
+```
+```go
 func Hash(hello *tlsx.ClientHello) (digest string, bare string)
 ```
 
