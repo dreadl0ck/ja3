@@ -112,12 +112,14 @@ func Hash(hello *tlsx.ClientHello) (digest string, bare string) {
 	b.WriteString(sepField)
 	b.WriteString(sPoints.String())
 
+	// apparently the extra step with the sum variable is necessary, instead of doing:
+	// return hex.EncodeToString(md5.Sum([]byte(b.String()))[:]), b.String()
+	// this produces a compile error: slice of unaddressable value
+
 	// produce md5 hash from bare string
-	var out []byte
-	for _, by := range md5.Sum([]byte(b.String())) {
-		out = append(out, by)
-	}
+	sum := md5.Sum([]byte(b.String()))
 
 	// return as hex string
-	return hex.EncodeToString(out), b.String()
+	// [:] to create []byte from [Size]byte
+	return hex.EncodeToString(sum[:]), b.String()
 }

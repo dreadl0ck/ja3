@@ -57,6 +57,8 @@ func BenchmarkDigestFromPacket(b *testing.B) {
 		b.Fatal(p.ErrorLayer().Error())
 	}
 
+	b.ReportAllocs()
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		_, _ = Packet(p)
 	}
@@ -96,6 +98,8 @@ func BenchmarkDigestFromHello(b *testing.B) {
 		}
 	}
 
+	b.ReportAllocs()
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		_, _ = Hash(hello)
 	}
