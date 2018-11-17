@@ -6,6 +6,7 @@
 ![Linux](https://img.shields.io/badge/Supports-Linux-green.svg)
 ![macOS](https://img.shields.io/badge/Supports-macOS-green.svg)
 ![Windows](https://img.shields.io/badge/Supports-Windows-green.svg)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/dreadl0ck/ja3)
 
 JA3 is a technique developed by Salesforce, to fingerprint the TLS client hello.
 
