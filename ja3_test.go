@@ -72,17 +72,31 @@ func getHello(p gopacket.Packet, b *testing.B) (hello *tlsx.ClientHello) {
 	return
 }
 
-func TestDigestCorrect(t *testing.T) {
-	var (
-		p       = gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Lazy)
-		hash, _ = Packet(p)
-	)
+func TestDigestHexCorrect(t *testing.T) {
+
+	p := gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Lazy)
+	if p.ErrorLayer() != nil {
+		t.Fatal(p.ErrorLayer().Error())
+	}
+
+	hash := DigestHexPacket(p)
 	if hash != "4d7a28d6f2263ed61de88ca66eb011e3" {
 		t.Fatal(hash, "!=", "4d7a28d6f2263ed61de88ca66eb011e3")
 	}
 }
 
-func BenchmarkDigestFromPacket(b *testing.B) {
+func BenchmarkDigestHexPacket(b *testing.B) {
+
+	p := gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Default)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		DigestHexPacket(p)
+	}
+}
+
+func BenchmarkDigestPacket(b *testing.B) {
 	p := gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Default)
 	if p.ErrorLayer() != nil {
 		b.Fatal(p.ErrorLayer().Error())
@@ -91,11 +105,37 @@ func BenchmarkDigestFromPacket(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_, _ = Packet(p)
+		DigestPacket(p)
 	}
 }
 
-func BenchmarkDigestFromHello(b *testing.B) {
+func BenchmarkBarePacket(b *testing.B) {
+	p := gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Default)
+	if p.ErrorLayer() != nil {
+		b.Fatal(p.ErrorLayer().Error())
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		BarePacket(p)
+	}
+}
+
+func BenchmarkDigestHex(b *testing.B) {
+	var (
+		p     = gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Lazy)
+		hello = getHello(p, b)
+	)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		DigestHex(hello)
+	}
+}
+
+func BenchmarkDigest(b *testing.B) {
 
 	var (
 		p     = gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Lazy)
@@ -105,11 +145,11 @@ func BenchmarkDigestFromHello(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_, _ = Hash(hello)
+		Digest(hello)
 	}
 }
 
-func BenchmarkDigestFromHelloOld(b *testing.B) {
+func BenchmarkBare(b *testing.B) {
 
 	var (
 		p     = gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Lazy)
@@ -119,6 +159,6 @@ func BenchmarkDigestFromHelloOld(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_, _ = HashWithBuilder(hello)
+		Bare(hello)
 	}
 }

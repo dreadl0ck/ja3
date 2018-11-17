@@ -20,7 +20,7 @@ It was forked to **github.com/dreadl0ck/tlsx**.
 
 This implementation uses gopacket for packet decoding.
 Assembly of the ja3 bare was previously implemented with the golang 1.10 **strings.Builder** type,
-however using byte slices for this turned out to be faster and causes less allocations.
+however using byte slices for this turned out to be faster and causes less allocations. (Thanks for the tips @lukechampine)
 
 ## Package Usage
 
@@ -62,8 +62,8 @@ func DigestHex(hello *tlsx.ClientHello) string
 
 ## Commandline Tool
 
-The commandline program mimics the python reference implementation by default, 
-reads the pcap file and prints the all extracted client hellos as JSON array to stdout.
+The commandline program mimics the python reference implementation by default.
+It reads the pcap file and prints the all extracted client hellos as JSON array to stdout.
 Printing output as CSV, tab separated values or with a custom separator is also supported.
 
     $ goja3 -h
@@ -152,17 +152,19 @@ For more details on what you can see and do with JA3 and JA3S, please see this S
 
 ## Benchmarks & Tests
 
-Thanks @lukechampine for the optimization tips! 
-DigestFromHello is ~200ns faster now and there are less allocations :)
-
 Run the benchmarks and the correctness test with:
 
-    $ go test -bench=.
+    $ go test -v -bench=.
+    === RUN   TestDigestHexCorrect
+    --- PASS: TestDigestHexCorrect (0.00s)
     goos: darwin
     goarch: amd64
     pkg: github.com/dreadl0ck/ja3
-    BenchmarkDigestFromPacket-12      	 1000000	      1524 ns/op	     992 B/op	      25 allocs/op
-    BenchmarkDigestFromHello-12       	 1000000	      1096 ns/op	     776 B/op	      15 allocs/op
-    BenchmarkDigestFromHelloOld-12    	 1000000	      1273 ns/op	     672 B/op	      25 allocs/op
+    BenchmarkDigestHexPacket-12    	 1000000	      1337 ns/op	     864 B/op	      24 allocs/op
+    BenchmarkDigestPacket-12       	 1000000	      1283 ns/op	     800 B/op	      22 allocs/op
+    BenchmarkBarePacket-12         	 1000000	      1093 ns/op	     800 B/op	      22 allocs/op
+    BenchmarkDigestHex-12          	 1000000	      1005 ns/op	     648 B/op	      14 allocs/op
+    BenchmarkDigest-12             	 1000000	      1244 ns/op	     584 B/op	      12 allocs/op
+    BenchmarkBare-12               	 2000000	       916 ns/op	     584 B/op	      12 allocs/op
     PASS
-    ok  	github.com/dreadl0ck/ja3	3.961s
+    ok  	github.com/dreadl0ck/ja3	8.850s
