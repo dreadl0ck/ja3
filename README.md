@@ -17,8 +17,9 @@ This package provides a pure golang implementation, that was created to operate 
 For this to work, the package needed to be slightly modified to store the values for extensions in the order they are encountered.
 It was forked to **github.com/dreadl0ck/tlsx**.
 
-This implementation uses the golang 1.10 **strings.Builder** type for faster string concatenation,
-and gopacket for packet decoding.
+This implementation uses gopacket for packet decoding.
+Assembly of the ja3 bare was previously implemented with the golang 1.10 **strings.Builder** type,
+however using byte slices for this turned out to be faster and causes less allocations.
 
 ## Package Usage
 
