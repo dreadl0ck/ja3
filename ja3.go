@@ -64,73 +64,62 @@ func DigestHex(hello *tlsx.ClientHello) string {
 // This is the JA3 SSL Client Fingerprint returned by this function.
 func Bare(hello *tlsx.ClientHello) []byte {
 
-	var (
-		// TODO use fixed size buffers?
-		suites  []byte
-		exts    []byte
-		sGroups []byte
-		sPoints []byte
-	)
+	// TODO: refactor into struct with inbuilt buffer to reduce allocations to ~ zero
+	// i.e. only realloc if previously allocated buffer is too small for current packet
+
+	maxPossibleBufferLength := 5 + 1 + // Version = uint16 => maximum = 65536 = 5chars + 1 field sep
+		(5+1)*len(hello.CipherSuites) + // CipherSuite = uint16 => maximum = 65536 = 5chars
+		(5+1)*len(hello.AllExtensions) + // uint16 = 2B => maximum = 65536 = 5chars
+		(5+1)*len(hello.SupportedGroups) + // uint16 = 2B => maximum = 65536 = 5chars
+		(3+1)*len(hello.SupportedPoints) // uint8 = 1B => maximum = 256 = 3chars
+
+	buffer := make([]byte, 0, maxPossibleBufferLength)
+
+	buffer = strconv.AppendInt(buffer, int64(hello.HandshakeVersion), 10)
+	buffer = append(buffer, sepFieldByte)
 
 	// collect cipher suites
 	lastElem := len(hello.CipherSuites) - 1
-	for i, cs := range hello.CipherSuites {
-		suites = strconv.AppendInt(suites, int64(cs), 10)
-		if i != lastElem {
-			suites = append(suites, sepValueByte)
+	if len(hello.CipherSuites) > 1 {
+		for _, e := range hello.CipherSuites[:lastElem] {
+			buffer = strconv.AppendInt(buffer, int64(e), 10)
+			buffer = append(buffer, sepValueByte)
 		}
 	}
+	buffer = strconv.AppendInt(buffer, int64(hello.CipherSuites[lastElem]), 10)
+	buffer = append(buffer, sepFieldByte)
 
 	// collect extensions
 	lastElem = len(hello.AllExtensions) - 1
-	for i, e := range hello.AllExtensions {
-		exts = strconv.AppendInt(exts, int64(e), 10)
-		if i != lastElem {
-			exts = append(exts, sepValueByte)
+	if len(hello.AllExtensions) > 1 {
+		for _, e := range hello.AllExtensions[:lastElem] {
+			buffer = strconv.AppendInt(buffer, int64(e), 10)
+			buffer = append(buffer, sepValueByte)
 		}
 	}
+	buffer = strconv.AppendInt(buffer, int64(hello.AllExtensions[lastElem]), 10)
+	buffer = append(buffer, sepFieldByte)
 
 	// collect supported groups
 	lastElem = len(hello.SupportedGroups) - 1
-	for i, e := range hello.SupportedGroups {
-		sGroups = strconv.AppendInt(sGroups, int64(e), 10)
-		if i != lastElem {
-			sGroups = append(sGroups, sepValueByte)
+	if len(hello.SupportedGroups) > 1 {
+		for _, e := range hello.SupportedGroups[:lastElem] {
+			buffer = strconv.AppendInt(buffer, int64(e), 10)
+			buffer = append(buffer, sepValueByte)
 		}
 	}
+	buffer = strconv.AppendInt(buffer, int64(hello.SupportedGroups[lastElem]), 10)
+	buffer = append(buffer, sepFieldByte)
 
 	// collect supported points
 	lastElem = len(hello.SupportedPoints) - 1
-	for i, e := range hello.SupportedPoints {
-		sPoints = strconv.AppendInt(sPoints, int64(e), 10)
-		if i != lastElem {
-			sPoints = append(sPoints, sepValueByte)
+	if len(hello.SupportedPoints) > 1 {
+		for _, e := range hello.SupportedPoints[:lastElem] {
+			buffer = strconv.AppendInt(buffer, int64(e), 10)
+			buffer = append(buffer, sepValueByte)
 		}
 	}
+	buffer = strconv.AppendInt(buffer, int64(hello.SupportedPoints[lastElem]), 10)
 
-	// TODO use fixed size buffer?
-	// 8 (version) + len(suites) + len(exts) + len(sGroups) + len(sPoints) + 4 (separators)
-	// var buf = make([]byte, 8+len(suites)+len(exts)+len(sGroups)+len(sPoints)+4)
-
-	var buf []byte
-
-	// version
-	buf = strconv.AppendInt(buf, int64(hello.HandshakeVersion), 10)
-	buf = append(buf, sepFieldByte)
-
-	// ciphersuites
-	buf = append(buf, suites...)
-	buf = append(buf, sepFieldByte)
-
-	// extensions
-	buf = append(buf, exts...)
-	buf = append(buf, sepFieldByte)
-
-	// groups
-	buf = append(buf, sGroups...)
-	buf = append(buf, sepFieldByte)
-
-	buf = append(buf, sPoints...)
-
-	return buf
+	return buffer
 }
