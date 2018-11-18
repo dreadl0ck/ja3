@@ -22,6 +22,8 @@ This implementation uses gopacket for packet decoding.
 Assembly of the ja3 bare was previously implemented with the golang 1.10 **strings.Builder** type,
 however using byte slices for this turned out to be faster and causes less allocations. (Thanks for the tips @lukechampine)
 
+Thanks to @guigzzz for his pull request on further reducing allocations!
+
 ## Package Usage
 
 This package exports the following API:
@@ -92,9 +94,9 @@ on a 109 MB PCAP dumpfile (DEF CON 23 ICS Village.pcap):
     Go implementation:
 
     $ time goja3 -read pcaps/DEF\ CON\ 23\ ICS\ Village.pcap
-    real	0m1.079s
-    user	0m2.022s
-    sys	0m0.143s
+    real	0m0.996s
+    user	0m1.800s
+    sys	0m0.119s
 
 Output:
 
@@ -160,11 +162,11 @@ Run the benchmarks and the correctness test with:
     goos: darwin
     goarch: amd64
     pkg: github.com/dreadl0ck/ja3
-    BenchmarkDigestHexPacket-12    	 1000000	      1337 ns/op	     864 B/op	      24 allocs/op
-    BenchmarkDigestPacket-12       	 1000000	      1283 ns/op	     800 B/op	      22 allocs/op
-    BenchmarkBarePacket-12         	 1000000	      1093 ns/op	     800 B/op	      22 allocs/op
-    BenchmarkDigestHex-12          	 1000000	      1005 ns/op	     648 B/op	      14 allocs/op
-    BenchmarkDigest-12             	 1000000	      1244 ns/op	     584 B/op	      12 allocs/op
-    BenchmarkBare-12               	 2000000	       916 ns/op	     584 B/op	      12 allocs/op
+    BenchmarkDigestHexPacket-12    	 2000000	       927 ns/op	     464 B/op	      13 allocs/op
+    BenchmarkDigestPacket-12       	 2000000	       866 ns/op	     400 B/op	      11 allocs/op
+    BenchmarkBarePacket-12         	 2000000	       662 ns/op	     400 B/op	      11 allocs/op
+    BenchmarkDigestHex-12          	 3000000	       575 ns/op	     256 B/op	       3 allocs/op
+    BenchmarkDigest-12             	 3000000	       509 ns/op	     192 B/op	       1 allocs/op
+    BenchmarkBare-12               	 5000000	       336 ns/op	     192 B/op	       1 allocs/op
     PASS
-    ok  	github.com/dreadl0ck/ja3	8.850s
+    ok  	github.com/dreadl0ck/ja3	13.820s

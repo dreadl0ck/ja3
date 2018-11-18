@@ -86,7 +86,10 @@ func Bare(hello *tlsx.ClientHello) []byte {
 			buffer = append(buffer, sepValueByte)
 		}
 	}
-	buffer = strconv.AppendInt(buffer, int64(hello.CipherSuites[lastElem]), 10)
+	// handle case that cipher suites are empty
+	if lastElem != -1 {
+		buffer = strconv.AppendInt(buffer, int64(hello.CipherSuites[lastElem]), 10)
+	}
 	buffer = append(buffer, sepFieldByte)
 
 	// collect extensions
@@ -97,7 +100,10 @@ func Bare(hello *tlsx.ClientHello) []byte {
 			buffer = append(buffer, sepValueByte)
 		}
 	}
-	buffer = strconv.AppendInt(buffer, int64(hello.AllExtensions[lastElem]), 10)
+	// handle case that extensions are empty
+	if lastElem != -1 {
+		buffer = strconv.AppendInt(buffer, int64(hello.AllExtensions[lastElem]), 10)
+	}
 	buffer = append(buffer, sepFieldByte)
 
 	// collect supported groups
@@ -108,7 +114,10 @@ func Bare(hello *tlsx.ClientHello) []byte {
 			buffer = append(buffer, sepValueByte)
 		}
 	}
-	buffer = strconv.AppendInt(buffer, int64(hello.SupportedGroups[lastElem]), 10)
+	// handle case that supported groups are empty
+	if lastElem != -1 {
+		buffer = strconv.AppendInt(buffer, int64(hello.SupportedGroups[lastElem]), 10)
+	}
 	buffer = append(buffer, sepFieldByte)
 
 	// collect supported points
@@ -119,7 +128,10 @@ func Bare(hello *tlsx.ClientHello) []byte {
 			buffer = append(buffer, sepValueByte)
 		}
 	}
-	buffer = strconv.AppendInt(buffer, int64(hello.SupportedPoints[lastElem]), 10)
+	// handle case that supported points are empty
+	if lastElem != -1 {
+		buffer = strconv.AppendInt(buffer, int64(hello.SupportedPoints[lastElem]), 10)
+	}
 
 	return buffer
 }
