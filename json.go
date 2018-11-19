@@ -125,6 +125,10 @@ func ReadFileJSON(file string, out io.Writer) {
 	if err != nil {
 		panic(err)
 	}
+
+	if Debug {
+		fmt.Println(len(records), "fingeprints.")
+	}
 }
 
 // convert a time.Time to a string timestamp in the format seconds.microseconds

@@ -57,10 +57,14 @@ func ReadFileCSV(file string, out io.Writer, separator string) {
 	columns := []string{"timestamp", "source_ip", "source_port", "destination_ip", "destination_port", "ja3_digest", "\n"}
 	out.Write([]byte(strings.Join(columns, separator)))
 
+	count := 0
 	for {
 		// read packet data
 		data, ci, err := r.ReadPacketData()
 		if err == io.EOF {
+			if Debug {
+				fmt.Println(count, "fingeprints.")
+			}
 			return
 		} else if err != nil {
 			panic(err)
@@ -76,14 +80,19 @@ func ReadFileCSV(file string, out io.Writer, separator string) {
 		// check if we got a result
 		if digest != "" {
 
+			count++
+
 			var (
 				b  strings.Builder
 				nl = p.NetworkLayer()
 				tl = p.TransportLayer()
 			)
 
+			// got an a digest but no transport or network layer
 			if tl == nil || nl == nil {
-				fmt.Println("error: ", nl, tl, p.Dump())
+				if Debug {
+					fmt.Println("got a nil layer: ", nl, tl, p.Dump(), digest)
+				}
 				continue
 			}
 

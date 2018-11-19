@@ -28,11 +28,14 @@ var (
 	flagTSV       = flag.Bool("tsv", false, "print as TAB separated values")
 	flagSeparator = flag.String("separator", ",", "set a custom separator")
 	flagInput     = flag.String("read", "", "read PCAP file")
+	flagDebug     = flag.Bool("debug", false, "toggle debug mode")
 )
 
 func main() {
 
 	flag.Parse()
+
+	ja3.Debug = *flagDebug
 
 	if *flagInput == "" {
 		fmt.Println("use the -read flag to supply an input file.")

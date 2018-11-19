@@ -28,6 +28,7 @@ const (
 )
 
 var (
+	Debug        = false
 	sepValueByte = byte(45)
 	sepFieldByte = byte(44)
 )

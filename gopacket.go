@@ -17,6 +17,7 @@ package ja3
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/dreadl0ck/tlsx"
 	"github.com/google/gopacket"
@@ -33,7 +34,13 @@ func DigestPacket(p gopacket.Packet) [md5.Size]byte {
 // DigestHexPacket returns the hex string for the packet
 // for a packet carrying a TLS Client Hello
 func DigestHexPacket(p gopacket.Packet) string {
-	sum := md5.Sum(BarePacket(p))
+
+	bare := BarePacket(p)
+	if len(bare) == 0 {
+		return ""
+	}
+
+	sum := md5.Sum(bare)
 	return hex.EncodeToString(sum[:])
 }
 
@@ -64,7 +71,9 @@ func BarePacket(p gopacket.Packet) []byte {
 					err   = hello.Unmarshall(tcp.LayerPayload())
 				)
 				if err != nil {
-					// fmt.Println(err, p.Dump())
+					if Debug {
+						fmt.Println(err, p.Dump())
+					}
 					return []byte{}
 				}
 
