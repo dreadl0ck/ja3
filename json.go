@@ -18,13 +18,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"time"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
-	"github.com/google/gopacket/pcapgo"
 )
 
 // Record contains all information for a calculated JA3
@@ -43,26 +41,11 @@ type Record struct {
 // currently no PCAPNG support
 func ReadFileJSON(file string, out io.Writer) {
 
-	f, err := os.Open(file)
+	r, f, err := openPcap(file)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
-
-	var r PacketSource
-
-	r, err = pcapgo.NewReader(f)
-	if err != nil {
-		// maybe its a PCAPNG
-		var errPcapNg error
-		r, errPcapNg = pcapgo.NewNgReader(f, pcapgo.DefaultNgReaderOptions)
-		if errPcapNg != nil {
-			// nope
-			fmt.Println("pcap error:", err)
-			fmt.Println("pcap-ng error:", errPcapNg)
-			panic("cannot open PCAP file")
-		}
-	}
 
 	var records []*Record
 

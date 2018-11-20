@@ -29,6 +29,7 @@ var (
 	flagSeparator = flag.String("separator", ",", "set a custom separator")
 	flagInput     = flag.String("read", "", "read PCAP file")
 	flagDebug     = flag.Bool("debug", false, "toggle debug mode")
+	flagInterface = flag.String("iface", "", "specify network interface to read packets from")
 )
 
 func main() {
@@ -36,6 +37,11 @@ func main() {
 	flag.Parse()
 
 	ja3.Debug = *flagDebug
+
+	if *flagInterface != "" {
+		ja3.ReadInterfaceCSV(*flagInterface, os.Stdout, *flagSeparator)
+		return
+	}
 
 	if *flagInput == "" {
 		fmt.Println("use the -read flag to supply an input file.")

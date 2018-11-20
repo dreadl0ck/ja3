@@ -28,6 +28,12 @@ Thanks to @guigzzz for his pull request on further reducing allocations!
 
 This package exports the following API:
 
+Live Capture:
+
+```go
+func ReadInterfaceCSV(iface string, out io.Writer, separator string) 
+```
+
 Files:
 
 ```go

@@ -17,45 +17,25 @@ package ja3
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
-
-	"github.com/google/gopacket/pcapgo"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 )
-
-// PacketSource means we can read Packets
-type PacketSource interface {
-	ReadPacketData() ([]byte, gopacket.CaptureInfo, error)
-}
 
 // ReadFileCSV reads the PCAP file at the given path
 // and prints out all packets containing JA3 digests to the supplied io.Writer
 // currently no PCAPNG support
 func ReadFileCSV(file string, out io.Writer, separator string) {
 
-	f, err := os.Open(file)
+	r, f, err := openPcap(file)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
 
-	var r PacketSource
-
-	r, err = pcapgo.NewReader(f)
-	if err != nil {
-		// maybe its a PCAPNG
-		r, err = pcapgo.NewNgReader(f, pcapgo.DefaultNgReaderOptions)
-		if err != nil {
-			// nope
-			panic(err)
-		}
-	}
-
-	columns := []string{"timestamp", "source_ip", "source_port", "destination_ip", "destination_port", "ja3_digest", "\n"}
-	out.Write([]byte(strings.Join(columns, separator)))
+	columns := []string{"timestamp", "source_ip", "source_port", "destination_ip", "destination_port", "ja3_digest"}
+	out.Write([]byte(strings.Join(columns, separator) + "\n"))
 
 	count := 0
 	for {
