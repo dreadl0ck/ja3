@@ -38,7 +38,6 @@ type Record struct {
 
 // ReadFileJSON reads the PCAP file at the given path
 // and prints out all packets containing JA3 digests fromatted as JSON to the supplied io.Writer
-// currently no PCAPNG support
 func ReadFileJSON(file string, out io.Writer) {
 
 	r, f, err := openPcap(file)

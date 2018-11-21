@@ -25,7 +25,6 @@ import (
 
 // ReadFileCSV reads the PCAP file at the given path
 // and prints out all packets containing JA3 digests to the supplied io.Writer
-// currently no PCAPNG support
 func ReadFileCSV(file string, out io.Writer, separator string) {
 
 	r, f, err := openPcap(file)
