@@ -22,29 +22,25 @@ import (
 	"github.com/dreadl0ck/tlsx"
 )
 
-const (
-	sepValue = "-"
-	sepField = ","
-)
-
 var (
+	// Debug indicates whether we run in debug mode.
 	Debug        = false
 	sepValueByte = byte(45)
 	sepFieldByte = byte(44)
 )
 
-// BareToDigestHex converts a bare []byte to a hex string
+// BareToDigestHex converts a bare []byte to a hex string.
 func BareToDigestHex(bare []byte) string {
 	sum := md5.Sum(bare)
 	return hex.EncodeToString(sum[:])
 }
 
-// Digest returns only the digest md5
+// Digest returns only the digest md5.
 func Digest(hello *tlsx.ClientHello) [md5.Size]byte {
 	return md5.Sum(Bare(hello))
 }
 
-// DigestHex produce md5 hash from bare string
+// DigestHex produce md5 hash from bare string.
 func DigestHex(hello *tlsx.ClientHello) string {
 	return BareToDigestHex(Bare(hello))
 }

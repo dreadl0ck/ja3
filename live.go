@@ -5,10 +5,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/google/gopacket/pcap"
-
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcap"
 )
 
 // ReadInterfaceCSV reads packets from the named interface
