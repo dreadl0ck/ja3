@@ -8,7 +8,7 @@ import (
 	"github.com/google/gopacket/pcapgo"
 )
 
-// PacketSource means we can read Packets
+// PacketSource means we can read Packets.
 type PacketSource interface {
 	ReadPacketData() ([]byte, gopacket.CaptureInfo, error)
 }
