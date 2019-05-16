@@ -29,7 +29,7 @@ func ReadInterfaceCSV(iface string, out io.Writer, separator string) {
 		data, ci, err := h.ReadPacketData()
 		if err == io.EOF {
 			if Debug {
-				fmt.Println(count, "fingeprints.")
+				fmt.Println(count, "fingerprints.")
 			}
 			return
 		} else if err != nil {
