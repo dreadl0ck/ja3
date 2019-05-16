@@ -165,14 +165,16 @@ Run the benchmarks and the correctness test with:
     $ go test -v -bench=.
     === RUN   TestDigestHexCorrect
     --- PASS: TestDigestHexCorrect (0.00s)
+    === RUN   TestDigestHexComparePcap
+    --- PASS: TestDigestHexComparePcap (0.13s)
     goos: darwin
     goarch: amd64
     pkg: github.com/dreadl0ck/ja3
-    BenchmarkDigestHexPacket-12    	 2000000	       927 ns/op	     464 B/op	      13 allocs/op
-    BenchmarkDigestPacket-12       	 2000000	       866 ns/op	     400 B/op	      11 allocs/op
-    BenchmarkBarePacket-12         	 2000000	       662 ns/op	     400 B/op	      11 allocs/op
-    BenchmarkDigestHex-12          	 3000000	       575 ns/op	     256 B/op	       3 allocs/op
-    BenchmarkDigest-12             	 3000000	       509 ns/op	     192 B/op	       1 allocs/op
-    BenchmarkBare-12               	 5000000	       336 ns/op	     192 B/op	       1 allocs/op
+    BenchmarkDigestHexPacket-12    	 1000000	      1814 ns/op	     464 B/op	      13 allocs/op
+    BenchmarkDigestPacket-12       	 1000000	      1768 ns/op	     400 B/op	      11 allocs/op
+    BenchmarkBarePacket-12         	 1000000	      1548 ns/op	     400 B/op	      11 allocs/op
+    BenchmarkDigestHex-12          	 1000000	      1430 ns/op	     256 B/op	       3 allocs/op
+    BenchmarkDigest-12             	 1000000	      1368 ns/op	     192 B/op	       1 allocs/op
+    BenchmarkBare-12               	 1000000	      1128 ns/op	     192 B/op	       1 allocs/op
     PASS
-    ok  	github.com/dreadl0ck/ja3	13.820s
+    ok  	github.com/dreadl0ck/ja3	9.314s
