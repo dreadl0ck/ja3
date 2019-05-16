@@ -16,7 +16,9 @@ package ja3
 
 import (
 	"testing"
-
+	"bytes"
+	"io/ioutil"
+	"encoding/json"
 	"github.com/dreadl0ck/tlsx"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -72,6 +74,10 @@ func getHello(p gopacket.Packet, b *testing.B) (hello *tlsx.ClientHello) {
 	return
 }
 
+/*
+ *	Tests
+ */
+
 func TestDigestHexCorrect(t *testing.T) {
 
 	p := gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Lazy)
@@ -84,6 +90,53 @@ func TestDigestHexCorrect(t *testing.T) {
 		t.Fatal(hash, "!=", "4d7a28d6f2263ed61de88ca66eb011e3")
 	}
 }
+
+func TestDigestHexComparePcap(t *testing.T) {
+	
+	// Step 1: Read JSON output of reference implementation
+	data, err := ioutil.ReadFile("ja3_output_testpcap.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var referenceRecords = make([]*Record,0)
+	err = json.Unmarshal(data, &referenceRecords)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Step 2: generate JSON output wth goja3 and read into buffer
+	var (
+		b bytes.Buffer
+		records = make([]*Record,0)
+	)
+
+	// read test.pcap and generate fingerprints
+	ReadFileJSON("test.pcap", &b)
+	
+	err = json.Unmarshal(data, &records)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Step 3: compare the number of fingerprints and then the digest for each record
+	if len(records) != len(referenceRecords) {
+		t.Fatal("len(records) != len(referenceRecords): ", len(records), " != ", len(referenceRecords))
+	}
+
+	// range reference records
+	for i, r := range referenceRecords {
+
+		// compare reference digest to the one produced by goja3
+		if r.JA3Digest != records[i].JA3Digest {
+			t.Fatal("r.JA3Digest != records[i].JA3Digest: ", r.JA3Digest, " != ", records[i].JA3Digest)
+		}
+	}
+}
+
+/*
+ *	Benchmarks
+ */
 
 func BenchmarkDigestHexPacket(b *testing.B) {
 
