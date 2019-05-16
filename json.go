@@ -33,7 +33,7 @@ type Record struct {
 	JA3Digest       string `json:"ja3_digest"`
 	SourceIP        string `json:"source_ip"`
 	SourcePort      int    `json:"source_port"`
-	Timestamp       string `json:"timestamp"`
+	Timestamp       float64 `json:"timestamp"`
 }
 
 // ReadFileJSON reads the PCAP file at the given path
@@ -91,7 +91,7 @@ func ReadFileJSON(file string, out io.Writer) {
 				JA3Digest:       BareToDigestHex(bare),
 				SourceIP:        nl.NetworkFlow().Src().String(),
 				SourcePort:      srcPort,
-				Timestamp:       timeToString(ci.Timestamp),
+				Timestamp:       timeToFloat(ci.Timestamp),
 			})
 		}
 	}
@@ -117,4 +117,16 @@ func ReadFileJSON(file string, out io.Writer) {
 func timeToString(t time.Time) string {
 	micro := fmt.Sprintf("%06d", t.Nanosecond()/1000)
 	return strconv.FormatInt(t.Unix(), 10) + "." + micro
+}
+
+func timeStringToFloat64(t string) float64 {
+	f, err := strconv.ParseFloat(t, 64)
+	if err != nil {
+		fmt.Println("[ERROR] failed to convert",t, "to float64. error:", err)
+	}
+	return f
+} 
+
+func timeToFloat(t time.Time) float64 {
+	return timeStringToFloat64(timeToString(t))
 }
