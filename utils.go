@@ -44,7 +44,7 @@ func openPcap(file string) (PacketSource, *os.File, error) {
 		// try to create pcapng reader
 		var errPcapNg error
 		r, errPcapNg = pcapgo.NewNgReader(f, pcapgo.DefaultNgReaderOptions)
-		if err != nil {
+		if errPcapNg != nil {
 			// nope
 			fmt.Println("pcap error:", errPcap)
 			fmt.Println("pcap-ng error:", errPcapNg)

@@ -34,7 +34,10 @@ func ReadFileCSV(file string, out io.Writer, separator string) {
 	defer f.Close()
 
 	columns := []string{"timestamp", "source_ip", "source_port", "destination_ip", "destination_port", "ja3_digest"}
-	out.Write([]byte(strings.Join(columns, separator) + "\n"))
+	_, err = out.Write([]byte(strings.Join(columns, separator) + "\n"))
+	if err != nil {
+		panic(err)
+	}
 
 	count := 0
 	for {
