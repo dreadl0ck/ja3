@@ -20,8 +20,8 @@ import (
 	"fmt"
 
 	"github.com/dreadl0ck/tlsx"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
+	"github.com/dreadl0ck/gopacket"
+	"github.com/dreadl0ck/gopacket/layers"
 )
 
 // DigestPacket returns the Ja3 digest

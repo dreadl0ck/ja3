@@ -19,8 +19,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
+	"github.com/dreadl0ck/gopacket"
+	"github.com/dreadl0ck/gopacket/layers"
 )
 
 // ReadFileCSV reads the PCAP file at the given path
