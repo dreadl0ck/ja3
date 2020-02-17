@@ -15,13 +15,14 @@
 package ja3
 
 import (
-	"testing"
 	"bytes"
-	"io/ioutil"
 	"encoding/json"
+	"io/ioutil"
+	"testing"
+
 	"github.com/dreadl0ck/tlsx"
-	"github.com/dreadl0ck/gopacket"
-	"github.com/dreadl0ck/gopacket/layers"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 )
 
 var tlsPacket = []byte{
@@ -92,14 +93,14 @@ func TestDigestHexCorrect(t *testing.T) {
 }
 
 func TestDigestHexComparePcap(t *testing.T) {
-	
+
 	// Step 1: Read JSON output of reference implementation
 	data, err := ioutil.ReadFile("ja3_output_testpcap.json")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var referenceRecords = make([]*Record,0)
+	var referenceRecords = make([]*Record, 0)
 	err = json.Unmarshal(data, &referenceRecords)
 	if err != nil {
 		t.Fatal(err)
@@ -107,13 +108,13 @@ func TestDigestHexComparePcap(t *testing.T) {
 
 	// Step 2: generate JSON output wth goja3 and read into buffer
 	var (
-		b bytes.Buffer
-		records = make([]*Record,0)
+		b       bytes.Buffer
+		records = make([]*Record, 0)
 	)
 
 	// read test.pcap and generate fingerprints
 	ReadFileJSON("test.pcap", &b)
-	
+
 	err = json.Unmarshal(data, &records)
 	if err != nil {
 		t.Fatal(err)

@@ -21,18 +21,18 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dreadl0ck/gopacket"
-	"github.com/dreadl0ck/gopacket/layers"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 )
 
 // Record contains all information for a calculated JA3
 type Record struct {
-	DestinationIP   string `json:"destination_ip"`
-	DestinationPort int    `json:"destination_port"`
-	JA3             string `json:"ja3"`
-	JA3Digest       string `json:"ja3_digest"`
-	SourceIP        string `json:"source_ip"`
-	SourcePort      int    `json:"source_port"`
+	DestinationIP   string  `json:"destination_ip"`
+	DestinationPort int     `json:"destination_port"`
+	JA3             string  `json:"ja3"`
+	JA3Digest       string  `json:"ja3_digest"`
+	SourceIP        string  `json:"source_ip"`
+	SourcePort      int     `json:"source_port"`
 	Timestamp       float64 `json:"timestamp"`
 }
 
@@ -122,10 +122,10 @@ func timeToString(t time.Time) string {
 func timeStringToFloat64(t string) float64 {
 	f, err := strconv.ParseFloat(t, 64)
 	if err != nil {
-		fmt.Println("[ERROR] failed to convert",t, "to float64. error:", err)
+		fmt.Println("[ERROR] failed to convert", t, "to float64. error:", err)
 	}
 	return f
-} 
+}
 
 func timeToFloat(t time.Time) float64 {
 	return timeStringToFloat64(timeToString(t))
