@@ -5,9 +5,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/dreadl0ck/gopacket"
-	"github.com/dreadl0ck/gopacket/layers"
-	"github.com/dreadl0ck/gopacket/pcap"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcap"
 )
 
 // ReadInterfaceCSV reads packets from the named interface
@@ -46,6 +46,10 @@ func ReadInterfaceCSV(iface string, out io.Writer, separator string) {
 			// get JA3 if possible
 			digest = DigestHexPacket(p)
 		)
+
+		if digest == "" {
+			digest = DigestHexPacketJa3s(p)
+		}
 
 		// check if we got a result
 		if digest != "" {

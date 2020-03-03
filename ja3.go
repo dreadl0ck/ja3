@@ -49,16 +49,16 @@ func BareToDigestHex(bare []byte) string {
 }
 
 // Digest returns only the digest md5.
-func Digest(hello *tlsx.ClientHello) [md5.Size]byte {
+func Digest(hello *tlsx.ClientHelloBasic) [md5.Size]byte {
 	return md5.Sum(Bare(hello))
 }
 
 // DigestHex produce md5 hash from bare string.
-func DigestHex(hello *tlsx.ClientHello) string {
+func DigestHex(hello *tlsx.ClientHelloBasic) string {
 	return BareToDigestHex(Bare(hello))
 }
 
-// Bare returns the JA3 bare string for a given tlsx.ClientHello instance
+// Bare returns the JA3 bare string for a given tlsx.ClientHelloBasic instance
 // JA3 is a technique developed by Salesforce, to fingerprint TLS Client Hellos.
 // the official python implementation can be found here: https://github.com/salesforce/ja3
 // JA3 gathers the decimal values of the bytes for the following fields; SSL Version, Accepted Ciphers, List of Extensions, Elliptic Curves, and Elliptic Curve Formats.
@@ -72,7 +72,7 @@ func DigestHex(hello *tlsx.ClientHello) string {
 // 769,4–5–10–9–100–98–3–6–19–18–99,,,
 // These strings are then MD5 hashed to produce an easily consumable and shareable 32 character fingerprint.
 // This is the JA3 SSL Client Fingerprint returned by this function.
-func Bare(hello *tlsx.ClientHello) []byte {
+func Bare(hello *tlsx.ClientHelloBasic) []byte {
 
 	// TODO: refactor into struct with inbuilt buffer to reduce allocations to ~ zero
 	// i.e. only realloc if previously allocated buffer is too small for current packet

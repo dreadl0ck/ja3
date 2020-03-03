@@ -15,13 +15,13 @@
 package ja3
 
 import (
-	"testing"
 	"bytes"
-	"io/ioutil"
 	"encoding/json"
 	"github.com/dreadl0ck/tlsx"
-	"github.com/dreadl0ck/gopacket"
-	"github.com/dreadl0ck/gopacket/layers"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
+	"io/ioutil"
+	"testing"
 )
 
 var tlsPacket = []byte{
@@ -43,7 +43,7 @@ var tlsPacket = []byte{
 	0x03, 0x02, 0x02,
 }
 
-func getHello(p gopacket.Packet, b *testing.B) (hello *tlsx.ClientHello) {
+func getHello(p gopacket.Packet, b *testing.B) (hello *tlsx.ClientHelloBasic) {
 	if tl := p.TransportLayer(); tl != nil {
 		if tcp, ok := tl.(*layers.TCP); ok {
 			if tcp.SYN {
@@ -55,16 +55,8 @@ func getHello(p gopacket.Packet, b *testing.B) (hello *tlsx.ClientHello) {
 			} else if tcp.RST {
 				b.Fatal("Unexpected packet")
 			} else {
-
-				// invalid length, this is not handled by the tsx package
-				// bail out otherwise there will be a panic
-				if len(tcp.LayerPayload()) < 6 {
-					b.Fatal("invalid packet")
-				}
-
-				hello = &tlsx.ClientHello{}
-
-				err := hello.Unmarshall(tcp.LayerPayload())
+				hello = &tlsx.ClientHelloBasic{}
+				err := hello.Unmarshal(tcp.LayerPayload())
 				if err != nil {
 					b.Fatal("invalid packet", err)
 				}
@@ -112,9 +104,9 @@ func TestDigestHexComparePcap(t *testing.T) {
 	)
 
 	// read test.pcap and generate fingerprints
-	ReadFileJSON("test.pcap", &b)
+	ReadFileJSON("test.pcap", &b, false)
 	
-	err = json.Unmarshal(data, &records)
+	err = json.Unmarshal(b.Bytes(), &records)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -130,6 +122,10 @@ func TestDigestHexComparePcap(t *testing.T) {
 		// compare reference digest to the one produced by goja3
 		if r.JA3Digest != records[i].JA3Digest {
 			t.Fatal("r.JA3Digest != records[i].JA3Digest: ", r.JA3Digest, " != ", records[i].JA3Digest)
+		}
+		// compare reference digest to the one produced by goja3
+		if r.JA3SDigest != records[i].JA3SDigest {
+			t.Fatal("r.JA3SDigest != records[i].JAS3Digest: ", r.JA3SDigest, " != ", records[i].JA3SDigest)
 		}
 	}
 }

@@ -21,24 +21,26 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dreadl0ck/gopacket"
-	"github.com/dreadl0ck/gopacket/layers"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 )
 
 // Record contains all information for a calculated JA3
 type Record struct {
-	DestinationIP   string `json:"destination_ip"`
-	DestinationPort int    `json:"destination_port"`
-	JA3             string `json:"ja3"`
-	JA3Digest       string `json:"ja3_digest"`
-	SourceIP        string `json:"source_ip"`
-	SourcePort      int    `json:"source_port"`
+	DestinationIP   string  `json:"destination_ip"`
+	DestinationPort int     `json:"destination_port"`
+	JA3             string  `json:"ja3"`
+	JA3Digest       string  `json:"ja3_digest"`
+	JA3S            string  `json:"ja3s"`
+	JA3SDigest      string  `json:"ja3s_digest"`
+	SourceIP        string  `json:"source_ip"`
+	SourcePort      int     `json:"source_port"`
 	Timestamp       float64 `json:"timestamp"`
 }
 
 // ReadFileJSON reads the PCAP file at the given path
-// and prints out all packets containing JA3 digests fromatted as JSON to the supplied io.Writer
-func ReadFileJSON(file string, out io.Writer) {
+// and prints out all packets containing JA3 digests formatted as JSON to the supplied io.Writer
+func ReadFileJSON(file string, out io.Writer, doJA3s bool) {
 
 	r, f, err := openPcap(file)
 	if err != nil {
@@ -62,8 +64,14 @@ func ReadFileJSON(file string, out io.Writer) {
 			p = gopacket.NewPacket(data, layers.LinkTypeEthernet, gopacket.Lazy)
 
 			// get JA3 if possible
-			bare = BarePacket(p)
+			bare     = BarePacket(p)
+			isServer bool
 		)
+
+		if len(bare) == 0 && doJA3s {
+			bare = BarePacketJa3s(p)
+			isServer = true
+		}
 
 		// check if we got a result
 		if len(bare) > 0 {
@@ -83,16 +91,24 @@ func ReadFileJSON(file string, out io.Writer) {
 			srcPort, _ := strconv.Atoi(tl.TransportFlow().Src().String())
 			dstPort, _ := strconv.Atoi(tl.TransportFlow().Dst().String())
 
-			// append record and populate all fields
-			records = append(records, &Record{
+			r := &Record{
 				DestinationIP:   nl.NetworkFlow().Dst().String(),
 				DestinationPort: dstPort,
-				JA3:             string(bare),
-				JA3Digest:       BareToDigestHex(bare),
 				SourceIP:        nl.NetworkFlow().Src().String(),
 				SourcePort:      srcPort,
 				Timestamp:       timeToFloat(ci.Timestamp),
-			})
+			}
+
+			if isServer {
+				r.JA3S = string(bare)
+				r.JA3SDigest = BareToDigestHex(bare)
+			} else {
+				r.JA3 = string(bare)
+				r.JA3Digest = BareToDigestHex(bare)
+			}
+
+			// append record and populate all fields
+			records = append(records, r)
 		}
 	}
 
@@ -102,14 +118,16 @@ func ReadFileJSON(file string, out io.Writer) {
 		panic(err)
 	}
 
-	// write to output io.Writer
-	_, err = out.Write(b)
-	if err != nil {
-		panic(err)
+	if string(b) != "null" { // no matches will result in "null" json
+		// write to output io.Writer
+		_, err = out.Write(b)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	if Debug {
-		fmt.Println(len(records), "fingeprints.")
+		fmt.Println(len(records), "fingerprints.")
 	}
 }
 
@@ -122,10 +140,10 @@ func timeToString(t time.Time) string {
 func timeStringToFloat64(t string) float64 {
 	f, err := strconv.ParseFloat(t, 64)
 	if err != nil {
-		fmt.Println("[ERROR] failed to convert",t, "to float64. error:", err)
+		fmt.Println("[ERROR] failed to convert", t, "to float64. error:", err)
 	}
 	return f
-} 
+}
 
 func timeToFloat(t time.Time) float64 {
 	return timeStringToFloat64(timeToString(t))

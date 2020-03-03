@@ -30,6 +30,8 @@ var (
 	flagInput     = flag.String("read", "", "read PCAP file")
 	flagDebug     = flag.Bool("debug", false, "toggle debug mode")
 	flagInterface = flag.String("iface", "", "specify network interface to read packets from")
+	flagJa3S      = flag.Bool("ja3s", true, "include ja3 server hashes (ja3s)")
+	flagOnlyJa3S  = flag.Bool("ja3s-only", false, "dump ja3s only")
 )
 
 func main() {
@@ -48,6 +50,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if *flagOnlyJa3S {
+		ja3.ReadFileJa3s(*flagInput, os.Stdout)
+		return
+	}
+
 	if *flagTSV {
 		ja3.ReadFileCSV(*flagInput, os.Stdout, "\t")
 		return
@@ -59,6 +66,6 @@ func main() {
 	}
 
 	if *flagJSON {
-		ja3.ReadFileJSON(*flagInput, os.Stdout)
+		ja3.ReadFileJSON(*flagInput, os.Stdout, *flagJa3S)
 	}
 }
