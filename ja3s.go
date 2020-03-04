@@ -18,11 +18,12 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
 	"io"
 	"strconv"
 	"strings"
+
+	"github.com/dreadl0ck/gopacket"
+	"github.com/dreadl0ck/gopacket/layers"
 
 	"github.com/dreadl0ck/tlsx"
 )
@@ -138,7 +139,6 @@ func BareJa3s(hello *tlsx.ServerHelloBasic) []byte {
 	buffer = append(buffer, sepFieldByte)
 
 	if len(hello.Extensions) > 0 {
-
 
 		/*
 		 *	Extensions

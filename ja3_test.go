@@ -20,9 +20,9 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/dreadl0ck/gopacket"
+	"github.com/dreadl0ck/gopacket/layers"
 	"github.com/dreadl0ck/tlsx"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
 )
 
 var tlsPacket = []byte{

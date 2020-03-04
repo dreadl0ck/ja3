@@ -15,7 +15,7 @@ More details can be found in their blog post: https://engineering.salesforce.com
 
 This package provides a pure golang implementation of both the client and server hash functions,
 with unit tests to ensure correct behavior and performance. 
-This implementation uses [google/gopacket](https://github.com/google/gopacket) for packet decoding.
+This implementation uses [dreadl0ck/gopacket](https://github.com/dreadl0ck/gopacket) for packet decoding.
 
 The **[bradleyfalzon/tlsx](github.com/bradleyfalzon/tlsx)** fork used for parsing the TLS handshakes (**[dreadl0ck/tlsx](github.com/dreadl0ck/tlsx)**),
 has been extended to support extracting the server hello message, unit tests, 
