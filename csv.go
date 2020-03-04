@@ -25,7 +25,7 @@ import (
 
 // ReadFileCSV reads the PCAP file at the given path
 // and prints out all packets containing JA3 digests to the supplied io.Writer
-func ReadFileCSV(file string, out io.Writer, separator string) {
+func ReadFileCSV(file string, out io.Writer, separator string, doJA3s bool) {
 
 	r, f, err := openPcap(file)
 	if err != nil {
@@ -33,7 +33,7 @@ func ReadFileCSV(file string, out io.Writer, separator string) {
 	}
 	defer f.Close()
 
-	columns := []string{"timestamp", "source_ip", "source_port", "destination_ip", "destination_port", "ja3_digest"}
+	columns := []string{"timestamp", "source_ip", "source_port", "destination_ip", "destination_port", "ja3_digest", "ja3s_digest"}
 	_, err = out.Write([]byte(strings.Join(columns, separator) + "\n"))
 	if err != nil {
 		panic(err)
@@ -45,7 +45,7 @@ func ReadFileCSV(file string, out io.Writer, separator string) {
 		data, ci, err := r.ReadPacketData()
 		if err == io.EOF {
 			if Debug {
-				fmt.Println(count, "fingeprints.")
+				fmt.Println(count, "fingerprints.")
 			}
 			return
 		} else if err != nil {
@@ -57,7 +57,13 @@ func ReadFileCSV(file string, out io.Writer, separator string) {
 			p = gopacket.NewPacket(data, layers.LinkTypeEthernet, gopacket.Lazy)
 			// get JA3 if possible
 			digest = DigestHexPacket(p)
+			isServer bool
 		)
+
+		if doJA3s && digest == "" {
+			digest = DigestHexPacketJa3s(p)
+			isServer = true
+		}
 
 		// check if we got a result
 		if digest != "" {
@@ -88,7 +94,15 @@ func ReadFileCSV(file string, out io.Writer, separator string) {
 			b.WriteString(separator)
 			b.WriteString(tl.TransportFlow().Dst().String())
 			b.WriteString(separator)
-			b.WriteString(digest)
+			if isServer {
+				b.WriteString("")
+				b.WriteString(separator)
+				b.WriteString(digest)
+			} else { // client
+				b.WriteString(digest)
+				b.WriteString(separator)
+				b.WriteString("")
+			}
 			b.WriteString("\n")
 
 			_, err := out.Write([]byte(b.String()))

@@ -47,6 +47,10 @@ func ReadInterfaceCSV(iface string, out io.Writer, separator string) {
 			digest = DigestHexPacket(p)
 		)
 
+		if digest == "" {
+			digest = DigestHexPacketJa3s(p)
+		}
+
 		// check if we got a result
 		if digest != "" {
 
