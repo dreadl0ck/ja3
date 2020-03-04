@@ -56,12 +56,12 @@ func main() {
 	}
 
 	if *flagTSV {
-		ja3.ReadFileCSV(*flagInput, os.Stdout, "\t")
+		ja3.ReadFileCSV(*flagInput, os.Stdout, "\t", *flagJa3S)
 		return
 	}
 
 	if *flagCSV {
-		ja3.ReadFileCSV(*flagInput, os.Stdout, *flagSeparator)
+		ja3.ReadFileCSV(*flagInput, os.Stdout, *flagSeparator, *flagJa3S)
 		return
 	}
 

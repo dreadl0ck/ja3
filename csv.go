@@ -25,7 +25,7 @@ import (
 
 // ReadFileCSV reads the PCAP file at the given path
 // and prints out all packets containing JA3 digests to the supplied io.Writer
-func ReadFileCSV(file string, out io.Writer, separator string) {
+func ReadFileCSV(file string, out io.Writer, separator string, doJA3s bool) {
 
 	r, f, err := openPcap(file)
 	if err != nil {
@@ -60,7 +60,7 @@ func ReadFileCSV(file string, out io.Writer, separator string) {
 			isServer bool
 		)
 
-		if digest == "" {
+		if doJA3s && digest == "" {
 			digest = DigestHexPacketJa3s(p)
 			isServer = true
 		}

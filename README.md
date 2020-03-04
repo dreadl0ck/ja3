@@ -10,20 +10,19 @@
 
 JA3 is a technique developed by Salesforce, to fingerprint the TLS client and server hellos.
 
-The official python implementation can be found here: https://github.com/salesforce/ja3
-
+The official python implementation can be found [here](https://github.com/salesforce/ja3).
 More details can be found in their blog post: https://engineering.salesforce.com/open-sourcing-ja3-92c9e53c3c41
 
-This package provides a pure golang implementation, that was created to operate on **ClientHello** instances from the **bradleyfalzon/tlsx** package.
-For this to work, the package needed to be slightly modified to store the values for extensions in the order they are encountered.
-It was forked to **github.com/dreadl0ck/tlsx**.
-By now, the tlsx fork has been improved to support extracting the server hello message,
-besides unit tests, benchmarks and a faster unmarshaling interface for use with Ja3 fingerprinting.
+This package provides a pure golang implementation of both the client and server hash functions,
+with unit tests to ensure correct behavior and performance. 
+This implementation uses [google/gopacket](https://github.com/google/gopacket) for packet decoding.
 
-This implementation uses gopacket for packet decoding.
+The **[bradleyfalzon/tlsx](github.com/bradleyfalzon/tlsx)** fork used for parsing the TLS handshakes (**[dreadl0ck/tlsx](github.com/dreadl0ck/tlsx)**),
+has been extended to support extracting the server hello message, unit tests, 
+benchmarks and a faster decoding interface for use with Ja3 fingerprinting.
+
 Assembly of the ja3 bare was previously implemented with the golang 1.10 **strings.Builder** type,
 however using byte slices for this turned out to be faster and causes less allocations. (Thanks for the tips @lukechampine)
-
 Thanks to @guigzzz for his pull request on further reducing allocations!
 
 ## Package Usage
@@ -39,10 +38,10 @@ func ReadInterfaceCSV(iface string, out io.Writer, separator string)
 Files:
 
 ```go
-func ReadFileJSON(file string, out io.Writer)
+func ReadFileJSON(file string, out io.Writer, doJA3s bool)
 ```
 ```go
-func ReadFileCSV(file string, out io.Writer, separator string)
+func ReadFileCSV(file string, out io.Writer, separator string, doJA3s bool)
 ```
 
 Read file and only print Ja3s values, mimics the python implementation from salesforce:
@@ -93,7 +92,6 @@ func DigestHex(hello *tlsx.ClientHello) string
 ```go
 func DigestHexJa3s(hello *tlsx.ServerHello) string
 ```
-
 
 ## Commandline Tool
 

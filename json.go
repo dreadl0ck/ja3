@@ -68,7 +68,7 @@ func ReadFileJSON(file string, out io.Writer, doJA3s bool) {
 			isServer bool
 		)
 
-		if len(bare) == 0 && doJA3s {
+		if doJA3s && len(bare) == 0 {
 			bare = BarePacketJa3s(p)
 			isServer = true
 		}
