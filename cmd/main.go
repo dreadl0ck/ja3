@@ -18,6 +18,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/dreadl0ck/ja3"
 )
@@ -32,17 +33,27 @@ var (
 	flagInterface = flag.String("iface", "", "specify network interface to read packets from")
 	flagJa3S      = flag.Bool("ja3s", true, "include ja3 server hashes (ja3s)")
 	flagOnlyJa3S  = flag.Bool("ja3s-only", false, "dump ja3s only")
-	flagSnaplen   = flag.Int("snaplen", 1514, "default snaplen for ethernet frames")
+	flagSnaplen   = flag.Int("snaplen", 1514, "default snap length for ethernet frames")
+	flagPromisc   = flag.Bool("promisc", true, "capture in promiscuous mode (requires root)")
+	flagTimeout   = flag.Duration("timeout", 30*time.Second, "timeout for opening the network interface handle")
+	flagVersion   = flag.Bool("version", false, "display version and exit")
 )
+
+const version = "v1.0.2"
 
 func main() {
 
 	flag.Parse()
 
+	if *flagVersion {
+		fmt.Println(version)
+		os.Exit(0)
+	}
+
 	ja3.Debug = *flagDebug
 
 	if *flagInterface != "" {
-		ja3.ReadInterface(*flagInterface, os.Stdout, *flagSeparator, *flagJa3S, *flagJSON, *flagSnaplen)
+		ja3.ReadInterface(*flagInterface, os.Stdout, *flagSeparator, *flagJa3S, *flagJSON, *flagSnaplen, *flagPromisc, *flagTimeout)
 		return
 	}
 

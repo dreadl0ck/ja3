@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -15,9 +16,9 @@ import (
 // ReadInterface reads packets from the named interface
 // if asJSON is true the results will be dumped as newline separated JSON objects
 // otherwise CSV will be printed to the supplied io.Writer.
-func ReadInterface(iface string, out io.Writer, separator string, ja3s bool, asJSON bool, snaplen int) {
+func ReadInterface(iface string, out io.Writer, separator string, ja3s bool, asJSON bool, snaplen int, promisc bool, timeout time.Duration) {
 
-	h, err := pcap.OpenLive(iface, int32(snaplen), true, -1)
+	h, err := pcap.OpenLive(iface, int32(snaplen), promisc, timeout)
 	if err != nil {
 		panic(err)
 	}
@@ -47,8 +48,8 @@ func ReadInterface(iface string, out io.Writer, separator string, ja3s bool, asJ
 
 		var (
 			// create gopacket
-			p = gopacket.NewPacket(data, layers.LinkTypeEthernet, gopacket.Lazy)
-			bare = BarePacket(p)
+			p        = gopacket.NewPacket(data, layers.LinkTypeEthernet, gopacket.Lazy)
+			bare     = BarePacket(p)
 			isServer bool
 		)
 

@@ -32,7 +32,7 @@ This package exports the following API:
 Live Capture from interface, outputs CSV with configurable separator or JSON:
 
 ```go
-func ReadInterface(iface string, out io.Writer, separator string, ja3s bool, asJSON bool, snaplen int) {
+func ReadInterface(iface string, out io.Writer, separator string, ja3s bool, asJSON bool, snaplen int, promisc bool, timeout time.Duration) {
 ```
 
 Files:
