@@ -29,10 +29,10 @@ Thanks to @guigzzz for his pull request on further reducing allocations!
 
 This package exports the following API:
 
-Live Capture from interface, outputs CSV:
+Live Capture from interface, outputs CSV with configurable separator or JSON:
 
 ```go
-func ReadInterfaceCSV(iface string, out io.Writer, separator string) 
+func ReadInterface(iface string, out io.Writer, separator string, ja3s bool, asJSON bool, snaplen int) {
 ```
 
 Files:
