@@ -15,6 +15,7 @@
 package ja3
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -87,15 +88,11 @@ func ReadFileJSON(file string, out io.Writer, doJA3s bool) {
 				continue
 			}
 
-			// convert ports to integers, ignore errors
-			srcPort, _ := strconv.Atoi(tl.TransportFlow().Src().String())
-			dstPort, _ := strconv.Atoi(tl.TransportFlow().Dst().String())
-
 			r := &Record{
 				DestinationIP:   nl.NetworkFlow().Dst().String(),
-				DestinationPort: dstPort,
+				DestinationPort: int(binary.BigEndian.Uint16(tl.TransportFlow().Dst().Raw())),
 				SourceIP:        nl.NetworkFlow().Src().String(),
-				SourcePort:      srcPort,
+				SourcePort:      int(binary.BigEndian.Uint16(tl.TransportFlow().Src().Raw())),
 				Timestamp:       timeToFloat(ci.Timestamp),
 			}
 

@@ -32,6 +32,7 @@ var (
 	flagInterface = flag.String("iface", "", "specify network interface to read packets from")
 	flagJa3S      = flag.Bool("ja3s", true, "include ja3 server hashes (ja3s)")
 	flagOnlyJa3S  = flag.Bool("ja3s-only", false, "dump ja3s only")
+	flagSnaplen   = flag.Int("snaplen", 1514, "default snaplen for ethernet frames")
 )
 
 func main() {
@@ -41,7 +42,7 @@ func main() {
 	ja3.Debug = *flagDebug
 
 	if *flagInterface != "" {
-		ja3.ReadInterfaceCSV(*flagInterface, os.Stdout, *flagSeparator)
+		ja3.ReadInterface(*flagInterface, os.Stdout, *flagSeparator, *flagJa3S, *flagJSON, *flagSnaplen)
 		return
 	}
 

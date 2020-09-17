@@ -1,6 +1,8 @@
 package ja3
 
 import (
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -10,21 +12,24 @@ import (
 	"github.com/dreadl0ck/gopacket/pcap"
 )
 
-// ReadInterfaceCSV reads packets from the named interface
-// and prints as CSV to the supplied io.Writer
-func ReadInterfaceCSV(iface string, out io.Writer, separator string) {
+// ReadInterface reads packets from the named interface
+// if asJSON is true the results will be dumped as newline separated JSON objects
+// otherwise CSV will be printed to the supplied io.Writer.
+func ReadInterface(iface string, out io.Writer, separator string, ja3s bool, asJSON bool, snaplen int) {
 
-	h, err := pcap.OpenLive(iface, 1024, true, -1)
+	h, err := pcap.OpenLive(iface, int32(snaplen), true, -1)
 	if err != nil {
 		panic(err)
 	}
 	defer h.Close()
 
-	columns := []string{"timestamp", "source_ip", "source_port", "destination_ip", "destination_port", "ja3_digest"}
+	if !asJSON {
+		columns := []string{"timestamp", "source_ip", "source_port", "destination_ip", "destination_port", "ja3_digest"}
 
-	_, err = out.Write([]byte(strings.Join(columns, separator) + "\n"))
-	if err != nil {
-		panic(err)
+		_, err = out.Write([]byte(strings.Join(columns, separator) + "\n"))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	count := 0
@@ -43,16 +48,17 @@ func ReadInterfaceCSV(iface string, out io.Writer, separator string) {
 		var (
 			// create gopacket
 			p = gopacket.NewPacket(data, layers.LinkTypeEthernet, gopacket.Lazy)
-			// get JA3 if possible
-			digest = DigestHexPacket(p)
+			bare = BarePacket(p)
+			isServer bool
 		)
 
-		if digest == "" {
-			digest = DigestHexPacketJa3s(p)
+		if ja3s && len(bare) == 0 {
+			bare = BarePacketJa3s(p)
+			isServer = true
 		}
 
 		// check if we got a result
-		if digest != "" {
+		if len(bare) > 0 {
 
 			count++
 
@@ -62,30 +68,69 @@ func ReadInterfaceCSV(iface string, out io.Writer, separator string) {
 				tl = p.TransportLayer()
 			)
 
-			// got an a digest but no transport or network layer
+			// got a bare but no transport or network layer
 			if tl == nil || nl == nil {
 				if Debug {
-					fmt.Println("got a nil layer: ", nl, tl, p.Dump(), digest)
+					fmt.Println("got a nil layer: ", nl, tl, p.Dump(), string(bare))
 				}
 				continue
 			}
 
-			b.WriteString(timeToString(ci.Timestamp))
-			b.WriteString(separator)
-			b.WriteString(nl.NetworkFlow().Src().String())
-			b.WriteString(separator)
-			b.WriteString(tl.TransportFlow().Src().String())
-			b.WriteString(separator)
-			b.WriteString(nl.NetworkFlow().Dst().String())
-			b.WriteString(separator)
-			b.WriteString(tl.TransportFlow().Dst().String())
-			b.WriteString(separator)
-			b.WriteString(digest)
-			b.WriteString("\n")
+			r := &Record{
+				DestinationIP:   nl.NetworkFlow().Dst().String(),
+				DestinationPort: int(binary.BigEndian.Uint16(tl.TransportFlow().Dst().Raw())),
+				SourceIP:        nl.NetworkFlow().Src().String(),
+				SourcePort:      int(binary.BigEndian.Uint16(tl.TransportFlow().Src().Raw())),
+				Timestamp:       timeToFloat(ci.Timestamp),
+			}
 
-			_, err := out.Write([]byte(b.String()))
-			if err != nil {
-				panic(err)
+			digest := BareToDigestHex(bare)
+			if isServer {
+				r.JA3S = string(bare)
+				r.JA3SDigest = digest
+			} else {
+				r.JA3 = string(bare)
+				r.JA3Digest = digest
+			}
+
+			if asJSON {
+
+				// make it pretty please
+				b, err := json.MarshalIndent(r, "", "    ")
+				if err != nil {
+					panic(err)
+				}
+
+				if string(b) != "null" { // no matches will result in "null" json
+					// write to output io.Writer
+					_, err = out.Write(b)
+					if err != nil {
+						panic(err)
+					}
+
+					_, err = out.Write([]byte("\n"))
+					if err != nil {
+						panic(err)
+					}
+				}
+			} else { // CSV
+				b.WriteString(timeToString(ci.Timestamp))
+				b.WriteString(separator)
+				b.WriteString(nl.NetworkFlow().Src().String())
+				b.WriteString(separator)
+				b.WriteString(tl.TransportFlow().Src().String())
+				b.WriteString(separator)
+				b.WriteString(nl.NetworkFlow().Dst().String())
+				b.WriteString(separator)
+				b.WriteString(tl.TransportFlow().Dst().String())
+				b.WriteString(separator)
+				b.WriteString(digest)
+				b.WriteString("\n")
+
+				_, err := out.Write([]byte(b.String()))
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 	}
