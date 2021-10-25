@@ -22,17 +22,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
-
 	"github.com/dreadl0ck/tlsx"
+	"github.com/google/gopacket"
 )
 
 // ReadFileJa3s reads the PCAP file at the given path
 // and prints out all packets containing JA3S digests to the supplied io.Writer
 func ReadFileJa3s(file string, out io.Writer) {
 
-	r, f, err := openPcap(file)
+	r, f, link, err := openPcap(file)
 	if err != nil {
 		panic(err)
 	}
@@ -53,7 +51,7 @@ func ReadFileJa3s(file string, out io.Writer) {
 
 		var (
 			// create gopacket
-			p = gopacket.NewPacket(data, layers.LinkTypeEthernet, gopacket.Lazy)
+			p = gopacket.NewPacket(data, link, gopacket.Lazy)
 			// get JA3 if possible
 			digest = DigestHexPacketJa3s(p)
 		)

@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
 )
 
 // Record contains all information for a calculated JA3
@@ -43,7 +42,7 @@ type Record struct {
 // and prints out all packets containing JA3 digests formatted as JSON to the supplied io.Writer
 func ReadFileJSON(file string, out io.Writer, doJA3s bool) {
 
-	r, f, err := openPcap(file)
+	r, f, link, err := openPcap(file)
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +61,7 @@ func ReadFileJSON(file string, out io.Writer, doJA3s bool) {
 
 		var (
 			// create gopacket
-			p = gopacket.NewPacket(data, layers.LinkTypeEthernet, gopacket.Lazy)
+			p = gopacket.NewPacket(data, link, gopacket.Lazy)
 
 			// get JA3 if possible
 			bare     = BarePacket(p)

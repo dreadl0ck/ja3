@@ -2,6 +2,7 @@ package ja3
 
 import (
 	"fmt"
+	"github.com/google/gopacket/layers"
 	"os"
 
 	"github.com/google/gopacket"
@@ -13,7 +14,7 @@ type PacketSource interface {
 	ReadPacketData() ([]byte, gopacket.CaptureInfo, error)
 }
 
-func openPcap(file string) (PacketSource, *os.File, error) {
+func openPcap(file string) (PacketSource, *os.File, layers.LinkType, error) {
 
 	// get file handle
 	f, err := os.Open(file)
@@ -22,12 +23,12 @@ func openPcap(file string) (PacketSource, *os.File, error) {
 	}
 
 	var (
-		r       PacketSource
-		errPcap error
+		reader       PacketSource
+		linkType     layers.LinkType
 	)
 
 	// try to create pcap reader
-	r, errPcap = pcapgo.NewReader(f)
+	pcapReader, errPcap := pcapgo.NewReader(f)
 	if errPcap != nil {
 
 		// maybe its a PCAPNG
@@ -42,15 +43,20 @@ func openPcap(file string) (PacketSource, *os.File, error) {
 		}
 
 		// try to create pcapng reader
-		var errPcapNg error
-		r, errPcapNg = pcapgo.NewNgReader(f, pcapgo.DefaultNgReaderOptions)
+		ngReader, errPcapNg := pcapgo.NewNgReader(f, pcapgo.DefaultNgReaderOptions)
 		if errPcapNg != nil {
 			// nope
 			fmt.Println("pcap error:", errPcap)
 			fmt.Println("pcap-ng error:", errPcapNg)
 			panic("cannot open PCAP file")
 		}
+
+		linkType = ngReader.LinkType()
+		reader = ngReader
+	} else {
+		linkType = pcapReader.LinkType()
+		reader = pcapReader
 	}
 
-	return r, f, err
+	return reader, f, linkType, err
 }
