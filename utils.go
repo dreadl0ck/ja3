@@ -23,8 +23,8 @@ func openPcap(file string) (PacketSource, *os.File, layers.LinkType, error) {
 	}
 
 	var (
-		reader       PacketSource
-		linkType     layers.LinkType
+		reader   PacketSource
+		linkType layers.LinkType
 	)
 
 	// try to create pcap reader

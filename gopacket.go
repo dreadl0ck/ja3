@@ -19,9 +19,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/dreadl0ck/tlsx"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
-	"github.com/dreadl0ck/tlsx"
 )
 
 // DigestPacket returns the Ja3 digest
