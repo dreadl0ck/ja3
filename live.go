@@ -4,7 +4,9 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/google/gopacket/pcapgo"
 	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -16,13 +18,30 @@ import (
 // ReadInterface reads packets from the named interface
 // if asJSON is true the results will be dumped as newline separated JSON objects
 // otherwise CSV will be printed to the supplied io.Writer.
-func ReadInterface(iface string, out io.Writer, separator string, ja3s bool, asJSON bool, snaplen int, promisc bool, timeout time.Duration) {
-
+func ReadInterface(iface, bpfFilter, dumpPkg string, out io.Writer, separator string, ja3s bool, asJSON bool, snaplen int, promisc bool, timeout time.Duration) {
 	h, err := pcap.OpenLive(iface, int32(snaplen), promisc, timeout)
 	if err != nil {
 		panic(err)
 	}
 	defer h.Close()
+
+	if strings.TrimSpace(bpfFilter) != "" {
+		if err := h.SetBPFFilter(bpfFilter); err != nil {
+			panic(err)
+		}
+	}
+
+	var dumpFileHandle *os.File
+	var pcapWriter *pcapgo.Writer
+	if dumpPkg != "" {
+		dumpFileHandle, err = os.OpenFile(dumpPkg, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			panic(err)
+		}
+		defer dumpFileHandle.Close()
+		pcapWriter = pcapgo.NewWriter(dumpFileHandle)
+		pcapWriter.WriteFileHeader(uint32(snaplen), h.LinkType())
+	}
 
 	if !asJSON {
 		columns := []string{"timestamp", "source_ip", "source_port", "destination_ip", "destination_port", "ja3_digest"}
@@ -60,8 +79,11 @@ func ReadInterface(iface string, out io.Writer, separator string, ja3s bool, asJ
 
 		// check if we got a result
 		if len(bare) > 0 {
-
 			count++
+
+			if pcapWriter != nil {
+				pcapWriter.WritePacket(ci, data)
+			}
 
 			var (
 				b  strings.Builder
