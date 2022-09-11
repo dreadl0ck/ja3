@@ -1,3 +1,5 @@
+//go:build !ja3_disable_gopacket
+
 package ja3
 
 import (
