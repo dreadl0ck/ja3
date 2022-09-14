@@ -1,3 +1,5 @@
+//go:build !ja3_disable_gopacket
+
 /*
  * JA3 - TLS Client Hello Hash
  * Copyright (c) 2017, Salesforce.com, Inc.

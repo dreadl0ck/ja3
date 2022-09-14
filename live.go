@@ -1,10 +1,11 @@
+//go:build !ja3_disable_gopacket
+
 package ja3
 
 import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/google/gopacket/pcapgo"
 	"io"
 	"os"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	"github.com/google/gopacket/pcapgo"
 )
 
 // ReadInterface reads packets from the named interface

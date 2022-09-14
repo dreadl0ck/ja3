@@ -1,11 +1,13 @@
+//go:build !ja3_disable_gopacket
+
 package ja3
 
 import (
 	"fmt"
-	"github.com/google/gopacket/layers"
 	"os"
 
 	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
 )
 
