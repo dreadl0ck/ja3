@@ -15,6 +15,7 @@
 package ja3
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"strconv"
@@ -89,6 +90,7 @@ func BareJa3s(hello *tlsx.ServerHelloBasic) []byte {
 				buffer = strconv.AppendInt(buffer, int64(hello.Extensions[lastElem]), 10)
 			}
 		}
+		buffer = bytes.TrimSuffix(buffer, []byte{sepValueByte})
 	}
 
 	return buffer

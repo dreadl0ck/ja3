@@ -15,6 +15,7 @@
 package ja3
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"strconv"
@@ -112,6 +113,7 @@ func Bare(hello *tlsx.ClientHelloBasic) []byte {
 			buffer = strconv.AppendInt(buffer, int64(hello.CipherSuites[lastElem]), 10)
 		}
 	}
+	buffer = bytes.TrimSuffix(buffer, []byte{sepValueByte})
 	buffer = append(buffer, sepFieldByte)
 
 	/*
@@ -136,6 +138,7 @@ func Bare(hello *tlsx.ClientHelloBasic) []byte {
 			buffer = strconv.AppendInt(buffer, int64(hello.AllExtensions[lastElem]), 10)
 		}
 	}
+	buffer = bytes.TrimSuffix(buffer, []byte{sepValueByte})
 	buffer = append(buffer, sepFieldByte)
 
 	/*
@@ -160,6 +163,7 @@ func Bare(hello *tlsx.ClientHelloBasic) []byte {
 			buffer = strconv.AppendInt(buffer, int64(hello.SupportedGroups[lastElem]), 10)
 		}
 	}
+	buffer = bytes.TrimSuffix(buffer, []byte{sepValueByte})
 	buffer = append(buffer, sepFieldByte)
 
 	/*
