@@ -17,7 +17,7 @@ This package provides a pure golang implementation of both the client and server
 with unit tests to ensure correct behavior and performance. 
 This implementation uses [dreadl0ck/gopacket](https://github.com/dreadl0ck/gopacket) for packet decoding.
 
-The **[bradleyfalzon/tlsx](github.com/bradleyfalzon/tlsx)** fork used for parsing the TLS handshakes (**[dreadl0ck/tlsx](github.com/dreadl0ck/tlsx)**),
+The **[bradleyfalzon/tlsx](https://github.com/bradleyfalzon/tlsx)** fork used for parsing the TLS handshakes (**[dreadl0ck/tlsx](https://github.com/dreadl0ck/tlsx)**),
 has been extended to support extracting the server hello message, unit tests, 
 benchmarks and a faster decoding interface for use with Ja3 fingerprinting.
 
