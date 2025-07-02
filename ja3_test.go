@@ -84,6 +84,145 @@ func TestDigestHexCorrect(t *testing.T) {
 	}
 }
 
+func TestNormalizedFingerprinting(t *testing.T) {
+	// Test that normalized and regular fingerprints work correctly
+	p := gopacket.NewPacket(tlsPacket, layers.LinkTypeEthernet, gopacket.Lazy)
+	if p.ErrorLayer() != nil {
+		t.Fatal(p.ErrorLayer().Error())
+	}
+
+	// Get fingerprints with different configurations
+	regularHash := DigestHexPacket(p)
+	normalizedHash := DigestHexPacketNormalized(p)
+	
+	// Both should be valid hashes
+	if len(regularHash) != 32 {
+		t.Fatal("Regular hash should be 32 characters, got:", len(regularHash))
+	}
+	if len(normalizedHash) != 32 {
+		t.Fatal("Normalized hash should be 32 characters, got:", len(normalizedHash))
+	}
+
+	// Test with configuration objects
+	config := &Config{NormalizeExtensions: false}
+	configHash := DigestHexPacketWithConfig(p, config)
+	if configHash != regularHash {
+		t.Fatal("Config hash should match regular hash")
+	}
+
+	configNormalized := &Config{NormalizeExtensions: true}
+	configNormalizedHash := DigestHexPacketWithConfig(p, configNormalized)
+	if configNormalizedHash != normalizedHash {
+		t.Fatal("Config normalized hash should match normalized hash")
+	}
+}
+
+func TestExtensionSorting(t *testing.T) {
+	// Create a test ClientHello with known extensions in specific order
+	hello := &tlsx.ClientHelloBasic{
+		HandshakeVersion: 0x0303,
+		AllExtensions: []uint16{
+			35,  // session_ticket 
+			0,   // server_name
+			10,  // supported_groups
+			11,  // ec_point_formats
+			13,  // signature_algorithms
+		},
+	}
+
+	// Get bare strings with and without normalization
+	regularBare := string(Bare(hello))
+	normalizedBare := string(BareNormalized(hello))
+
+	// Regular should have extensions in original order: 35-0-10-11-13
+	// Normalized should have extensions sorted: 0-10-11-13-35
+	if !containsSubstring(regularBare, "35-0-10-11-13") {
+		t.Fatal("Regular bare should contain extensions in original order, got:", regularBare)
+	}
+	if !containsSubstring(normalizedBare, "0-10-11-13-35") {
+		t.Fatal("Normalized bare should contain extensions in sorted order, got:", normalizedBare)
+	}
+
+	// Test with configuration
+	config := &Config{NormalizeExtensions: true}
+	configBare := string(BareWithConfig(hello, config))
+	if configBare != normalizedBare {
+		t.Fatal("Config-based normalization should match convenience function")
+	}
+}
+
+func TestConfigNil(t *testing.T) {
+	// Test that nil config uses default behavior
+	hello := &tlsx.ClientHelloBasic{
+		HandshakeVersion: 0x0303,
+		AllExtensions: []uint16{
+			35,  
+			0,   
+		},
+	}
+
+	regularBare := string(Bare(hello))
+	nilConfigBare := string(BareWithConfig(hello, nil))
+
+	if regularBare != nilConfigBare {
+		t.Fatal("Nil config should behave same as default config")
+	}
+}
+
+func TestGreaseFiltering(t *testing.T) {
+	// Test that GREASE values are filtered correctly in both modes
+	hello := &tlsx.ClientHelloBasic{
+		HandshakeVersion: 0x0303,
+		AllExtensions: []uint16{
+			0x0a0a, // GREASE value - should be filtered
+			0,      // server_name - should be kept
+			0x1a1a, // GREASE value - should be filtered
+			10,     // supported_groups - should be kept
+		},
+	}
+
+	regularBare := string(Bare(hello))
+	normalizedBare := string(BareNormalized(hello))
+
+	// Both should only contain non-GREASE extensions (0 and 10)
+	if containsSubstring(regularBare, "2570") || containsSubstring(regularBare, "6666") { // 0x0a0a and 0x1a1a in decimal
+		t.Fatal("Regular bare should not contain GREASE values, got:", regularBare)
+	}
+	if containsSubstring(normalizedBare, "2570") || containsSubstring(normalizedBare, "6666") {
+		t.Fatal("Normalized bare should not contain GREASE values, got:", normalizedBare)
+	}
+
+	// Both should contain the non-GREASE extensions
+	if !containsSubstring(regularBare, "0") || !containsSubstring(regularBare, "10") {
+		t.Fatal("Regular bare should contain non-GREASE extensions, got:", regularBare)
+	}
+	if !containsSubstring(normalizedBare, "0") || !containsSubstring(normalizedBare, "10") {
+		t.Fatal("Normalized bare should contain non-GREASE extensions, got:", normalizedBare)
+	}
+}
+
+// Helper function to check if a string contains a substring
+func containsSubstring(s, substr string) bool {
+	return len(s) >= len(substr) && findInString(s, substr) != -1
+}
+
+// Helper function to find substring in string (simple implementation)
+func findInString(s, substr string) int {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		match := true
+		for j := 0; j < len(substr); j++ {
+			if s[i+j] != substr[j] {
+				match = false
+				break
+			}
+		}
+		if match {
+			return i
+		}
+	}
+	return -1
+}
+
 func TestDigestHexComparePcap(t *testing.T) {
 
 	// Step 1: Read JSON output of reference implementation

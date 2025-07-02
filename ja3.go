@@ -18,10 +18,26 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+	"sort"
 	"strconv"
 
 	"github.com/dreadl0ck/tlsx"
 )
+
+// Config defines configuration options for JA3 fingerprinting
+type Config struct {
+	// NormalizeExtensions enables sort normalization of TLS extensions to counter
+	// randomization techniques used by modern browsers (e.g., Chrome).
+	// When enabled, extensions are sorted lexicographically before fingerprinting,
+	// making fingerprints robust against extension order randomization.
+	// Based on: https://hnull.org/2022/12/01/sorting-out-randomized-tls-fingerprints
+	NormalizeExtensions bool
+}
+
+// DefaultConfig provides the default configuration for JA3 fingerprinting
+var DefaultConfig = &Config{
+	NormalizeExtensions: false,
+}
 
 var (
 	// Debug indicates whether we run in debug mode.
@@ -59,11 +75,40 @@ func DigestHex(hello *tlsx.ClientHelloBasic) string {
 	return BareToDigestHex(Bare(hello))
 }
 
+// DigestWithConfig returns only the digest md5 using the provided config.
+func DigestWithConfig(hello *tlsx.ClientHelloBasic, config *Config) [md5.Size]byte {
+	return md5.Sum(BareWithConfig(hello, config))
+}
+
+// DigestHexWithConfig produce md5 hash from bare string using the provided config.
+func DigestHexWithConfig(hello *tlsx.ClientHelloBasic, config *Config) string {
+	return BareToDigestHex(BareWithConfig(hello, config))
+}
+
+// BareNormalized returns the JA3 bare string with sort normalization enabled.
+// This is a convenience function that creates a JA3 fingerprint robust against
+// TLS extension randomization as described in the article:
+// https://hnull.org/2022/12/01/sorting-out-randomized-tls-fingerprints
+func BareNormalized(hello *tlsx.ClientHelloBasic) []byte {
+	config := &Config{NormalizeExtensions: true}
+	return BareWithConfig(hello, config)
+}
+
+// DigestNormalized returns the JA3 digest with sort normalization enabled.
+func DigestNormalized(hello *tlsx.ClientHelloBasic) [md5.Size]byte {
+	return md5.Sum(BareNormalized(hello))
+}
+
+// DigestHexNormalized returns the JA3 hex digest with sort normalization enabled.
+func DigestHexNormalized(hello *tlsx.ClientHelloBasic) string {
+	return BareToDigestHex(BareNormalized(hello))
+}
+
 // Bare returns the JA3 bare string for a given tlsx.ClientHelloBasic instance
 // JA3 is a technique developed by Salesforce, to fingerprint TLS Client Hellos.
 // the official python implementation can be found here: https://github.com/salesforce/ja3
 // JA3 gathers the decimal values of the bytes for the following fields; SSL Version, Accepted Ciphers, List of Extensions, Elliptic Curves, and Elliptic Curve Formats.
-// It then concatenates those values together in order, using a “,” to delimit each field and a “-” to delimit each value in each field.
+// It then concatenates those values together in order, using a "," to delimit each field and a "-" to delimit each value in each field.
 // The field order is as follows:
 // SSLVersion,Ciphers,Extensions,EllipticCurves,EllipticCurvePointFormats
 // Example:
@@ -74,6 +119,16 @@ func DigestHex(hello *tlsx.ClientHelloBasic) string {
 // These strings are then MD5 hashed to produce an easily consumable and shareable 32 character fingerprint.
 // This is the JA3 SSL Client Fingerprint returned by this function.
 func Bare(hello *tlsx.ClientHelloBasic) []byte {
+	return BareWithConfig(hello, DefaultConfig)
+}
+
+// BareWithConfig returns the JA3 bare string using the provided configuration.
+// This allows for customization of the fingerprinting process, such as enabling
+// sort normalization to counter TLS extension randomization.
+func BareWithConfig(hello *tlsx.ClientHelloBasic, config *Config) []byte {
+	if config == nil {
+		config = DefaultConfig
+	}
 
 	// TODO: refactor into struct with inbuilt buffer to reduce allocations to ~ zero
 	// i.e. only realloc if previously allocated buffer is too small for current packet
@@ -120,10 +175,24 @@ func Bare(hello *tlsx.ClientHelloBasic) []byte {
 	 *	Extensions
 	 */
 
+	// Prepare extensions for processing
+	extensions := hello.AllExtensions
+	if config.NormalizeExtensions {
+		// Create a copy to avoid modifying the original slice
+		extensions = make([]uint16, len(hello.AllExtensions))
+		copy(extensions, hello.AllExtensions)
+		
+		// Sort extensions lexicographically by their type code for normalization
+		// This counters randomization techniques used by modern browsers
+		sort.Slice(extensions, func(i, j int) bool {
+			return extensions[i] < extensions[j]
+		})
+	}
+
 	// collect extensions
-	lastElem = len(hello.AllExtensions) - 1
-	if len(hello.AllExtensions) > 1 {
-		for _, e := range hello.AllExtensions[:lastElem] {
+	lastElem = len(extensions) - 1
+	if len(extensions) > 1 {
+		for _, e := range extensions[:lastElem] {
 			// filter GREASE values
 			if !greaseValues[uint16(e)] {
 				buffer = strconv.AppendInt(buffer, int64(e), 10)
@@ -134,8 +203,8 @@ func Bare(hello *tlsx.ClientHelloBasic) []byte {
 	// append last element if extensions are not empty
 	if lastElem != -1 {
 		// filter GREASE values
-		if !greaseValues[uint16(hello.AllExtensions[lastElem])] {
-			buffer = strconv.AppendInt(buffer, int64(hello.AllExtensions[lastElem]), 10)
+		if !greaseValues[uint16(extensions[lastElem])] {
+			buffer = strconv.AppendInt(buffer, int64(extensions[lastElem]), 10)
 		}
 	}
 	buffer = bytes.TrimSuffix(buffer, []byte{sepValueByte})

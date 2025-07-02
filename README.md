@@ -25,6 +25,54 @@ Assembly of the ja3 bare was previously implemented with the golang 1.10 **strin
 however using byte slices for this turned out to be faster and causes less allocations. (Thanks for the tips @lukechampine)
 Thanks to @guigzzz for his pull request on further reducing allocations!
 
+## Extension Normalization Support
+
+This implementation now includes optional support for **TLS extension normalization** to counter randomization techniques used by modern browsers (e.g., Chrome). When Chrome randomizes the order of TLS extensions in ClientHello messages, traditional JA3 fingerprints become unstable, with each connection potentially generating a different fingerprint.
+
+The solution is **sort normalization** - sorting the extensions lexicographically before creating the fingerprint. This approach:
+- Maintains 98.8% fingerprint distinctiveness (as reported in research)
+- Creates fingerprints robust against extension order randomization  
+- Implements the technique described in: https://hnull.org/2022/12/01/sorting-out-randomized-tls-fingerprints
+
+### Usage Examples
+
+```go
+// Traditional JA3 (default behavior)
+hash := ja3.DigestHex(hello)
+
+// JA3 with extension normalization (recommended for modern browsers)
+hashNormalized := ja3.DigestHexNormalized(hello)
+
+// Using configuration for custom behavior
+config := &ja3.Config{NormalizeExtensions: true}
+hashWithConfig := ja3.DigestHexWithConfig(hello, config)
+
+// Packet-based functions also support normalization
+hashFromPacket := ja3.DigestHexPacketNormalized(packet)
+```
+
+### API Functions with Normalization Support
+
+All existing functions now have normalized variants and configuration-aware versions:
+
+**Basic Functions:**
+- `BareNormalized(hello)` - JA3 bare string with normalization
+- `DigestNormalized(hello)` - JA3 digest with normalization  
+- `DigestHexNormalized(hello)` - JA3 hex digest with normalization
+
+**Configuration-Aware Functions:**
+- `BareWithConfig(hello, config)` - JA3 bare string with custom config
+- `DigestWithConfig(hello, config)` - JA3 digest with custom config
+- `DigestHexWithConfig(hello, config)` - JA3 hex digest with custom config
+
+**Packet Functions:**
+- `BarePacketNormalized(packet)` - Packet-based normalization
+- `DigestPacketNormalized(packet)` - Packet-based digest with normalization
+- `DigestHexPacketNormalized(packet)` - Packet-based hex digest with normalization
+- `BarePacketWithConfig(packet, config)` - Packet-based with custom config
+- `DigestPacketWithConfig(packet, config)` - Packet-based digest with custom config
+- `DigestHexPacketWithConfig(packet, config)` - Packet-based hex digest with custom config
+
 ## Package Usage
 
 This package exports the following API:
@@ -174,7 +222,7 @@ Output:
 
 JA3 gathers the decimal values of the bytes for the following fields: **SSL Version, Accepted Ciphers, List of Extensions, Elliptic Curves, and Elliptic Curve Formats**.
 
-It then concatenates those values together in order, using a “,” to delimit each field and a “-” to delimit each value in each field.
+It then concatenates those values together in order, using a "," to delimit each field and a "-" to delimit each value in each field.
 
 **The field order is as follows:**
 
@@ -194,7 +242,7 @@ These strings are then MD5 hashed to produce an easily consumable and shareable 
 
 This is the JA3 SSL Client Fingerprint.
 
-JA3 is a much more effective way to detect malicious activity over SSL than IP or domain based IOCs. Since JA3 detects the client application, it doesn’t matter if malware uses DGA (Domain Generation Algorithms), or different IPs for each C2 host, or even if the malware uses Twitter for C2, JA3 can detect the malware itself based on how it communicates rather than what it communicates to.
+JA3 is a much more effective way to detect malicious activity over SSL than IP or domain based IOCs. Since JA3 detects the client application, it doesn't matter if malware uses DGA (Domain Generation Algorithms), or different IPs for each C2 host, or even if the malware uses Twitter for C2, JA3 can detect the malware itself based on how it communicates rather than what it communicates to.
 
 JA3 is also an excellent detection mechanism in locked-down environments where only a few specific applications are allowed to be installed. In these types of environments one could build a whitelist of expected applications and then alert on any other JA3 hits.
 
