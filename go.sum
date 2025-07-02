@@ -1,5 +1,5 @@
-github.com/dreadl0ck/tlsx v1.0.1-google-gopacket h1:/P3y+CGRiCQbW0nZU2jWkEwKfXLkpEgHNhbbqlnrTTM=
-github.com/dreadl0ck/tlsx v1.0.1-google-gopacket/go.mod h1:amAb73WEEgPHWniMfwro6UpN6St3e5ypgq2tXM89IOo=
+github.com/dreadl0ck/tlsx v1.0.3 h1:wxa7ebE0LbMePxoYUllt505chw7pfqUNp4TLHkyJQHY=
+github.com/dreadl0ck/tlsx v1.0.3/go.mod h1:amAb73WEEgPHWniMfwro6UpN6St3e5ypgq2tXM89IOo=
 github.com/google/gopacket v1.1.17/go.mod h1:UdDNZ1OO62aGYVnPhxT1U6aI7ukYtA/kB8vaU0diBUM=
 github.com/google/gopacket v1.1.18 h1:lum7VRA9kdlvBi7/v2p7/zcbkduHaCH/SVVyurs7OpY=
 github.com/google/gopacket v1.1.18/go.mod h1:UdDNZ1OO62aGYVnPhxT1U6aI7ukYtA/kB8vaU0diBUM=
