@@ -129,6 +129,101 @@ func ReadFileJSON(file string, out io.Writer, doJA3s bool) {
 	}
 }
 
+// ReadFileJSONSorted reads the PCAP file at the given path with optional extension sorting
+// and prints out all packets containing JA3 digests formatted as JSON to the supplied io.Writer
+func ReadFileJSONSorted(file string, out io.Writer, doJA3s bool, sorted bool) {
+
+	r, f, link, err := openPcap(file)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	var records []*Record
+
+	for {
+		// read packet data
+		data, ci, err := r.ReadPacketData()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			panic(err)
+		}
+
+		var (
+			// create gopacket
+			p = gopacket.NewPacket(data, link, gopacket.Lazy)
+
+			// get JA3 if possible
+			bare     []byte
+			isServer bool
+		)
+
+		if sorted {
+			bare = BarePacketSorted(p)
+		} else {
+			bare = BarePacket(p)
+		}
+
+		if doJA3s && len(bare) == 0 {
+			bare = BarePacketJa3s(p)
+			isServer = true
+		}
+
+		// check if we got a result
+		if len(bare) > 0 {
+
+			var (
+				nl = p.NetworkLayer()
+				tl = p.TransportLayer()
+			)
+
+			// stop if either network or transport layer is nil
+			if tl == nil || nl == nil {
+				fmt.Println("error: ", nl, tl, p.Dump())
+				continue
+			}
+
+			r := &Record{
+				DestinationIP:   nl.NetworkFlow().Dst().String(),
+				DestinationPort: int(binary.BigEndian.Uint16(tl.TransportFlow().Dst().Raw())),
+				SourceIP:        nl.NetworkFlow().Src().String(),
+				SourcePort:      int(binary.BigEndian.Uint16(tl.TransportFlow().Src().Raw())),
+				Timestamp:       timeToFloat(ci.Timestamp),
+			}
+
+			if isServer {
+				r.JA3S = string(bare)
+				r.JA3SDigest = BareToDigestHex(bare)
+			} else {
+				r.JA3 = string(bare)
+				r.JA3Digest = BareToDigestHex(bare)
+			}
+
+			// append record and populate all fields
+			records = append(records, r)
+		}
+	}
+
+	// make it pretty please
+	b, err := json.MarshalIndent(records, "", "    ")
+	if err != nil {
+		panic(err)
+	}
+
+	if string(b) != "null" { // no matches will result in "null" json
+		// write to output io.Writer
+		_, err = out.Write(b)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if Debug {
+		fmt.Println(len(records), "fingerprints.")
+	}
+}
+
 // convert a time.Time to a string timestamp in the format seconds.microseconds
 func timeToString(t time.Time) string {
 	micro := fmt.Sprintf("%06d", t.Nanosecond()/1000)

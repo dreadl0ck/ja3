@@ -36,6 +36,7 @@ var (
 	flagPromisc     = flag.Bool("promisc", true, "capture in promiscuous mode (requires root)")
 	flagFilter      = flag.String("bpf", "(tcp[((tcp[12] & 0xf0) >>2)] = 0x16) && ((tcp[((tcp[12] & 0xf0) >>2)+5] = 0x01) || (tcp[((tcp[12] & 0xf0) >>2)+5] = 0x02))", "BPF filter for pcap, only support on live")
 	flagDumpPackets = flag.String("dump", "", "dump pcap file name, only support on live")
+	flagSorted      = flag.Bool("sorted", false, "sort TLS extensions to normalize fingerprints against randomization")
 	// https://godoc.org/github.com/google/gopacket/pcap#hdr-PCAP_Timeouts
 	flagTimeout = flag.Duration("timeout", pcap.BlockForever, "timeout for collecting packet batches")
 	flagVersion = flag.Bool("version", false, "display version and exit")
@@ -55,7 +56,11 @@ func main() {
 	ja3.Debug = *flagDebug
 
 	if *flagInterface != "" {
-		ja3.ReadInterface(*flagInterface, *flagFilter, *flagDumpPackets, os.Stdout, *flagSeparator, *flagJa3S, *flagJSON, *flagSnaplen, *flagPromisc, *flagTimeout)
+		if *flagSorted {
+			ja3.ReadInterfaceSorted(*flagInterface, *flagFilter, *flagDumpPackets, os.Stdout, *flagSeparator, *flagJa3S, *flagJSON, *flagSnaplen, *flagPromisc, *flagTimeout, *flagSorted)
+		} else {
+			ja3.ReadInterface(*flagInterface, *flagFilter, *flagDumpPackets, os.Stdout, *flagSeparator, *flagJa3S, *flagJSON, *flagSnaplen, *flagPromisc, *flagTimeout)
+		}
 		return
 	}
 
@@ -70,16 +75,28 @@ func main() {
 	}
 
 	if *flagTSV {
-		ja3.ReadFileCSV(*flagInput, os.Stdout, "\t", *flagJa3S)
+		if *flagSorted {
+			ja3.ReadFileCSVSorted(*flagInput, os.Stdout, "\t", *flagJa3S, *flagSorted)
+		} else {
+			ja3.ReadFileCSV(*flagInput, os.Stdout, "\t", *flagJa3S)
+		}
 		return
 	}
 
 	if *flagCSV {
-		ja3.ReadFileCSV(*flagInput, os.Stdout, *flagSeparator, *flagJa3S)
+		if *flagSorted {
+			ja3.ReadFileCSVSorted(*flagInput, os.Stdout, *flagSeparator, *flagJa3S, *flagSorted)
+		} else {
+			ja3.ReadFileCSV(*flagInput, os.Stdout, *flagSeparator, *flagJa3S)
+		}
 		return
 	}
 
 	if *flagJSON {
-		ja3.ReadFileJSON(*flagInput, os.Stdout, *flagJa3S)
+		if *flagSorted {
+			ja3.ReadFileJSONSorted(*flagInput, os.Stdout, *flagJa3S, *flagSorted)
+		} else {
+			ja3.ReadFileJSON(*flagInput, os.Stdout, *flagJa3S)
+		}
 	}
 }

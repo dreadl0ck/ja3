@@ -113,3 +113,99 @@ func ReadFileCSV(file string, out io.Writer, separator string, doJA3s bool) {
 		}
 	}
 }
+
+// ReadFileCSVSorted reads the PCAP file at the given path with optional extension sorting
+// and prints out all packets containing JA3 digests to the supplied io.Writer
+func ReadFileCSVSorted(file string, out io.Writer, separator string, doJA3s bool, sorted bool) {
+
+	r, f, link, err := openPcap(file)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	columns := []string{"timestamp", "source_ip", "source_port", "destination_ip", "destination_port", "ja3_digest", "ja3s_digest"}
+	_, err = out.Write([]byte(strings.Join(columns, separator) + "\n"))
+	if err != nil {
+		panic(err)
+	}
+
+	count := 0
+	for {
+		// read packet data
+		data, ci, err := r.ReadPacketData()
+		if err == io.EOF {
+			if Debug {
+				fmt.Println(count, "fingerprints.")
+			}
+			return
+		} else if err != nil {
+			panic(err)
+		}
+
+		var (
+			// create gopacket
+			p = gopacket.NewPacket(data, link, gopacket.Lazy)
+			// get JA3 if possible
+			digest   string
+			isServer bool
+		)
+
+		if sorted {
+			digest = DigestHexPacketSorted(p)
+		} else {
+			digest = DigestHexPacket(p)
+		}
+
+		if doJA3s && digest == "" {
+			digest = DigestHexPacketJa3s(p)
+			isServer = true
+		}
+
+		// check if we got a result
+		if digest != "" {
+
+			count++
+
+			var (
+				b  strings.Builder
+				nl = p.NetworkLayer()
+				tl = p.TransportLayer()
+			)
+
+			// got an a digest but no transport or network layer
+			if tl == nil || nl == nil {
+				if Debug {
+					fmt.Println("got a nil layer: ", nl, tl, p.Dump(), digest)
+				}
+				continue
+			}
+
+			b.WriteString(timeToString(ci.Timestamp))
+			b.WriteString(separator)
+			b.WriteString(nl.NetworkFlow().Src().String())
+			b.WriteString(separator)
+			b.WriteString(tl.TransportFlow().Src().String())
+			b.WriteString(separator)
+			b.WriteString(nl.NetworkFlow().Dst().String())
+			b.WriteString(separator)
+			b.WriteString(tl.TransportFlow().Dst().String())
+			b.WriteString(separator)
+			if isServer {
+				b.WriteString("")
+				b.WriteString(separator)
+				b.WriteString(digest)
+			} else { // client
+				b.WriteString(digest)
+				b.WriteString(separator)
+				b.WriteString("")
+			}
+			b.WriteString("\n")
+
+			_, err := out.Write([]byte(b.String()))
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+}
