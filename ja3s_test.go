@@ -12,11 +12,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package ja3
+package ja3_test
 
 import (
 	"bytes"
 	"encoding/hex"
+	"github.com/dreadl0ck/ja3"
 	"io/ioutil"
 	"log"
 	"testing"
@@ -67,7 +68,7 @@ func TestDigestHexJa3sCorrect(t *testing.T) {
 		t.Fatal(p.ErrorLayer().Error())
 	}
 
-	hash := DigestHexPacketJa3s(p)
+	hash := ja3.DigestHexPacketJa3s(p)
 	if hash != "5b94af9bf6efc9dea416841602004fbb" {
 		t.Fatal(hash, "!=", "5b94af9bf6efc9dea416841602004fbb")
 	}
@@ -79,7 +80,7 @@ func TestPcapWithNonEthernetEncapsulation(t *testing.T) {
 	)
 
 	// read test2.pcap and generate fingerprints
-	ReadFileJSON("test2.pcap", &b, true)
+	ja3.ReadFileJSON("test2.pcap", &b, true)
 
 	if b.String() == "" {
 		t.Fatal("expected output")
@@ -100,7 +101,7 @@ func TestDigestHexJa3sComparePcap(t *testing.T) {
 	)
 
 	// read test.pcap and generate fingerprints
-	ReadFileJa3s("test.pcap", &b)
+	ja3.ReadFileJa3s("test.pcap", &b)
 
 	// Step 3: compare the number of fingerprints and then the digest for each record
 	if len(data) != len(b.Bytes()) {
@@ -130,7 +131,7 @@ func BenchmarkDigestHexPacketJa3s(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		DigestHexPacketJa3s(p)
+		ja3.DigestHexPacketJa3s(p)
 	}
 }
 
@@ -143,7 +144,7 @@ func BenchmarkDigestPacketJa3s(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		DigestPacketJa3s(p)
+		ja3.DigestPacketJa3s(p)
 	}
 }
 
@@ -156,7 +157,7 @@ func BenchmarkBarePacketJa3s(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		BarePacketJa3s(p)
+		ja3.BarePacketJa3s(p)
 	}
 }
 
@@ -169,7 +170,7 @@ func BenchmarkDigestHexJa3s(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		DigestHexJa3s(hello)
+		ja3.DigestHexJa3s(hello)
 	}
 }
 
@@ -183,7 +184,7 @@ func BenchmarkDigestJa3s(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		DigestJa3s(hello)
+		ja3.DigestJa3s(hello)
 	}
 }
 
@@ -197,6 +198,6 @@ func BenchmarkBareJa3s(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		BareJa3s(hello)
+		ja3.BareJa3s(hello)
 	}
 }
