@@ -18,7 +18,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/dreadl0ck/ja3"
-	"github.com/google/gopacket/pcap"
+	"github.com/gopacket/gopacket/pcap"
 	"os"
 )
 
@@ -34,7 +34,7 @@ var (
 	flagOnlyJa3S  = flag.Bool("ja3s-only", false, "dump ja3s only")
 	flagSnaplen   = flag.Int("snaplen", 1514, "default snap length for ethernet frames")
 	flagPromisc   = flag.Bool("promisc", true, "capture in promiscuous mode (requires root)")
-	// https://godoc.org/github.com/google/gopacket/pcap#hdr-PCAP_Timeouts
+	// https://godoc.org/github.com/gopacket/gopacket/pcap#hdr-PCAP_Timeouts
 	flagTimeout   = flag.Duration("timeout", pcap.BlockForever, "timeout for collecting packet batches")
 	flagVersion   = flag.Bool("version", false, "display version and exit")
 )

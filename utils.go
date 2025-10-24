@@ -2,11 +2,11 @@ package ja3
 
 import (
 	"fmt"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket/layers"
 	"os"
 
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/pcapgo"
+	"github.com/gopacket/gopacket"
+	"github.com/gopacket/gopacket/pcapgo"
 )
 
 // PacketSource means we can read Packets.

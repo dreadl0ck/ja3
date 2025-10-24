@@ -19,8 +19,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket"
+	"github.com/gopacket/gopacket/layers"
 	"github.com/dreadl0ck/tlsx"
 )
 

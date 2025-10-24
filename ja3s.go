@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/dreadl0ck/tlsx"
-	"github.com/google/gopacket"
+	"github.com/gopacket/gopacket"
 )
 
 // ReadFileJa3s reads the PCAP file at the given path

@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/gopacket"
+	"github.com/gopacket/gopacket"
 )
 
 // Record contains all information for a calculated JA3
